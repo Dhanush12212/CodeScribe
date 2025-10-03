@@ -1,6 +1,6 @@
-# CodeMesh - A Live Collaborative Code Editor
+# CodeScribe - A Live Collaborative Code Editor
 
-CodeMesh is a real-time, collaborative code editor designed for seamless pair programming, coding interviews, and team collaboration. With features like live code sharing and Code execution. CodeMesh makes remote coding sessions effortless.
+CodeScribe is a real-time, collaborative code editor designed for seamless pair programming, coding interviews, and team collaboration. With features like live code sharing and Code execution. CodeScribe makes remote coding sessions effortless.
 
 ## Features
 
@@ -32,7 +32,7 @@ CodeMesh is a real-time, collaborative code editor designed for seamless pair pr
 
    - Clone the repository using the command:
      ```sh
-     git clone https://github.com/Dhanush12212/CodeMesh.git
+     git clone https://github.com/Dhanush12212/CodeScribe.git
      ```
 
 ## 2. Install Dependencies
@@ -74,7 +74,7 @@ CodeMesh is a real-time, collaborative code editor designed for seamless pair pr
 
 ## 6. Access the Application
 
-   - Open `http://localhost:5173` in your browser to start using CodeMesh.
+   - Open `http://localhost:5173` in your browser to start using CodeScribe.
 
 # Contributing
 
