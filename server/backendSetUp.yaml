@@ -1,0 +1,30 @@
+Backend (Node.js + Express + MongoDB + Socket.io)
+
+
+1️⃣ Initialize Backend
+Run npm init -y & install dependencies:
+express, mongoose, cors, dotenv, socket.io, jsonwebtoken, bcryptjs.
+
+2️⃣ Setup Authentication (JWT + MongoDB)
+Implement User model in MongoDB.
+Create /api/auth/register & /api/auth/login endpoints.
+Secure routes using JWT authentication.
+
+3️⃣ Implement WebSocket Server
+Set up a Socket.io server for real-time events.
+Handle events like:
+joinRoom → Users enter a coding session.
+codeChange → Broadcast code updates.
+cursorMove → Sync cursor positions.
+disconnect → Notify when users leave.
+
+4️⃣ Room Management & Code Storage
+Create a Room model in MongoDB.
+Save user sessions & code snippets.
+API Endpoints:
+POST /api/rooms/create → Create a new room.
+GET /api/rooms/:id → Fetch room details.
+
+5️⃣ WebRTC Signaling for Voice/Video Chat (Optional)
+Use WebSockets to exchange WebRTC signaling data.
+Manage peer connections for real-time audio/video calls.v 
