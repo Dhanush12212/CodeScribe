@@ -2,8 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express'; 
-import AuthRoute from './routes/AuthRoute.js';
-import EditorRoute from './routes/CodeEditorRoute.js';
+import AuthRoute from './routes/auth.routes.js' 
 import cookieParser from 'cookie-parser';
 import connectDB from './db/connectDB.js';
 import cors from 'cors';
@@ -29,8 +28,7 @@ app.use(cors({
 }));
 
 
-app.use('/api/Auth', AuthRoute);
-app.use('/api/Code', EditorRoute);
+app.use('/api/v1/auth', AuthRoute); 
  
 const rooms = new Map(); 
 

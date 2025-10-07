@@ -1,14 +1,14 @@
 import { useParams } from 'react-router-dom';
-import { Box } from '@chakra-ui/react';
 import React from 'react';
-import CodeEditor from '../components/CodeEditor'; 
+import CodeEditor from '../components/CodeEditor';
 
 function Home() {
-  const { roomId } = useParams();  
+  const { roomId } = useParams();
+
   return (
-    <Box minH="100vh" bg="#0f0a19" color="gray.500" px={6} py={8}>
-      <CodeEditor roomId={roomId} /> 
-    </Box>
+    <div className=" h-screen bg-[#0f0a19] text-gray-500 px-4 py-2 overflow-hidden">
+      <CodeEditor roomId={roomId} />
+    </div>
   );
 }
 

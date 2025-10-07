@@ -1,42 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import API_URL from '../../config.js';
+import { API_URL } from '../../config.js';
 import { useNavigate, Link } from 'react-router-dom';
 import { socket } from '../socket/socket.js';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import { 
+  FiLogIn, 
+  FiLogOut, 
+  FiInfo, 
+  FiAlertTriangle 
+} from 'react-icons/fi';
+
+const MySwal = withReactContent(Swal);
 
 function LandingPage() {
-  const [roomId, setRoomId] = useState("");
-  const [isLogin, setIsLogin] = useState(false);
+  const [roomId, setRoomId] = useState(""); 
   const [joinedRoom, setJoinedRoom] = useState("");
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  }); 
 
-  const navigate = useNavigate();
+  const navigate = useNavigate();  
 
-  useEffect(() => { 
-    const checkLoginStatus = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/Auth/loginStatus`, { withCredentials: true });
-        setIsLogin(response.data.isAuthenticated);
-      } catch (error) {
-        console.error("Error checking login status:", error);
-      }
-    };
-    checkLoginStatus();
+  // Show login popup on mount
+  useEffect(() => {
+    if (user) {
+      MySwal.fire({
+        title: <p>Welcome Back!</p>,
+        html: `<p style="font-size:16px;">Hello, ${user.name || 'User'}!</p>`,
+        iconHtml: <FiLogIn size={50} className="text-green-600"/>,
+        showConfirmButton: false,
+        timer: 1800,
+        width: '350px',
+        padding: '1.5rem',
+        timerProgressBar: true,
+      });
+    }
   }, []);
 
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log(`Connected: ${socket.id}`);
-    }); 
-
+    socket.on('connect', () => console.log(`Connected: ${socket.id}`));
     socket.on('roomJoined', ({ roomId, message }) => {
       console.log(message);
       setJoinedRoom(roomId);
       navigate(`/CodeMesh/${roomId}`);
     });
-
-    socket.on('error', (error) => {
-      alert(error.message);  
-    });
+    socket.on('error', (error) => alert(error.message));
 
     return () => {
       socket.off('connect');
@@ -47,29 +58,47 @@ function LandingPage() {
 
   const handleJoinRoom = () => { 
     if (!roomId.trim()) {
-      alert("Please enter a valid Room ID.");
+      MySwal.fire({
+        iconHtml: <FiAlertTriangle size={50} className="text-yellow-500"/>,
+        title: 'Missing Room ID',
+        text: 'Please enter a valid Room ID before joining!',
+        confirmButtonColor: '#16A34A',
+      });
       return;
     }
-    console.log("Joining room:", roomId); 
     socket.emit('joinRoom', roomId);
-  }; 
+  };
 
   const handleCreateRoom = () => {
     if (!roomId.trim()) {
-      alert("Please enter a Room ID to create.");
+      MySwal.fire({
+        iconHtml: <FiInfo size={50} className="text-blue-500"/>,
+        title: 'Room ID Required',
+        text: 'Please enter a Room ID to create a new room.',
+        confirmButtonColor: '#3B82F6',
+      });
       return;
     }
-    
-    socket.emit('joinRoom', roomId); 
+    socket.emit('joinRoom', roomId);
   };
-  
 
   const handleLogout = async () => {
     try {
-      await axios.put(`${API_URL}/Auth/logout`, {}, { withCredentials: true });
-      console.log("Logout Successfully");
-      setIsLogin(false);
-      navigate('/login');
+      await axios.put(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      localStorage.removeItem("user");
+      setUser(null);
+
+      MySwal.fire({
+        title: <p>Logged Out</p>,
+        html: `<p style="font-size:16px;">You have successfully logged out!</p>`,
+        iconHtml: <FiLogOut size={50} className="text-red-500"/>,
+        showConfirmButton: false,
+        timer: 1800,
+        width: '350px',
+        padding: '1.5rem',
+        timerProgressBar: true,
+      });
+
     } catch (error) {
       console.error("Logout Error: ", error.response ? error.response.data : error.message);
     }
@@ -77,19 +106,19 @@ function LandingPage() {
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-6 sm:px-0 relative">
-      {isLogin ? (
+      {user ? (
         <button
-          className="absolute top-4 right-4 bg-red-500 px-5 py-2 rounded-lg text-white font-bold shadow-lg hover:bg-red-600 transition-all duration-300"
+          className="absolute top-4 right-4 bg-red-500 px-5 py-2 rounded-lg text-white font-bold shadow-lg hover:bg-red-600 transition-all duration-300 flex items-center gap-2"
           onClick={handleLogout}
         >
-          Logout
+          <FiLogOut size={20}/> Logout
         </button>
       ) : (
         <Link to='/register'>
           <button 
-            className="absolute top-4 right-4 bg-zinc-600 px-8 py-3 rounded-lg text-white font-bold shadow-lg hover:bg-zinc-500 hover:text-black transition-all duration-300"
+            className="absolute top-4 right-4 bg-zinc-600 px-8 py-3 rounded-lg text-white font-bold shadow-lg hover:bg-zinc-500 hover:text-black transition-all duration-300 flex items-center gap-2"
           >
-            Sign In
+            <FiLogIn size={20}/> Sign In
           </button>
         </Link>
       )}
@@ -97,7 +126,7 @@ function LandingPage() {
       {/* Container */}
       <div className="absolute flex flex-col py-20 sm:py-40 items-center text-center gap-8 bg-white/10 backdrop-blur-xl p-8 sm:p-12 rounded-3xl shadow-xl border border-white/20">
         <div className="flex flex-col gap-4 text-white">
-          <h1 className="Text lg:text-5xl md:text-5xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-green-800 drop-shadow-lg text-center tracking-tight">
+          <h1 className="Text lg:text-5xl md:text-5xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-green-700 drop-shadow-lg text-center tracking-tight">
             Code Together, Anywhere, Anytime!
           </h1>
           <p className="desc sm:text-2xl font-medium sm:font-semibold text-gray-200 opacity-90 drop-shadow-md text-center leading-relaxed">
