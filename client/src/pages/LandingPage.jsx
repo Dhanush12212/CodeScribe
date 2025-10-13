@@ -9,14 +9,13 @@ import {
   FiLogIn, 
   FiLogOut, 
   FiInfo, 
-  FiAlertTriangle 
+  FiAlertTriangle
 } from 'react-icons/fi';
 
 const MySwal = withReactContent(Swal);
 
 function LandingPage() {
   const [roomId, setRoomId] = useState(""); 
-  const [joinedRoom, setJoinedRoom] = useState("");
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
@@ -24,30 +23,41 @@ function LandingPage() {
 
   const navigate = useNavigate();  
 
-  // Show login popup on mount
+  // Welcome back popup
   useEffect(() => {
     if (user) {
       MySwal.fire({
-        title: <p>Welcome Back!</p>,
+        title: <p className="text-xl font-semibold text-green-400">Welcome Back!</p>,
         html: `<p style="font-size:16px;">Hello, ${user.name || 'User'}!</p>`,
-        iconHtml: <FiLogIn size={50} className="text-green-600"/>,
+        iconHtml: `<svg xmlns="http://www.w3.org/2000/svg" class="text-green-500 mx-auto w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>`,
         showConfirmButton: false,
         timer: 1800,
-        width: '350px',
+        width: '380px',
+        background: '#1e1e2e',
+        color: '#fff',
         padding: '1.5rem',
         timerProgressBar: true,
       });
     }
   }, []);
 
+  // Socket listeners
   useEffect(() => {
     socket.on('connect', () => console.log(`Connected: ${socket.id}`));
     socket.on('roomJoined', ({ roomId, message }) => {
       console.log(message);
-      setJoinedRoom(roomId);
+      Swal.close(); // Close loader popup
       navigate(`/CodeMesh/${roomId}`);
     });
-    socket.on('error', (error) => alert(error.message));
+    socket.on('error', (error) => {
+      Swal.close();
+      MySwal.fire({
+        iconHtml: <FiAlertTriangle size={50} className="text-red-500"/>,
+        title: 'Error!',
+        text: error.message || 'Something went wrong!',
+        confirmButtonColor: '#EF4444',
+      });
+    });
 
     return () => {
       socket.off('connect');
@@ -55,6 +65,43 @@ function LandingPage() {
       socket.off('error');
     };
   }, [navigate]);
+
+  // Tailwind Loader Popup
+  const showLoader = (message) => {
+    MySwal.fire({
+      title: `<p class="text-2xl font-bold text-cyan-400 tracking-wide">${message}</p>`,
+      html: `
+        <div class="flex flex-col items-center justify-center gap-8 py-4">
+          <div class="w-16 h-16 border-4 border-t-cyan-400 border-gray-600 rounded-full animate-spin shadow-[0_0_20px_#06b6d4]"></div>
+          <div class="w-3/4 h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-500 w-0 transition-all duration-300 ease-linear rounded-full shadow-[0_0_15px_#06b6d4]"></div>
+          </div>
+          <p class="text-gray-300 text-sm italic">Please wait while we set things up...</p>
+        </div>
+      `,
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      background: 'rgba(17, 24, 39, 0.95)', // bg-gray-900/95
+      color: '#fff',
+      width: '500px',
+      padding: '2rem 1.5rem',
+      customClass: {
+        popup: 'rounded-3xl shadow-2xl backdrop-blur-xl border border-gray-700',
+      },
+      didOpen: () => {
+        let width = 0;
+        const bar = Swal.getPopup().querySelector('#progressBar');
+        const interval = setInterval(() => {
+          width = (width + 3) % 100;
+          bar.style.width = width + '%';
+        }, 100);
+        Swal.stopProgress = () => clearInterval(interval);
+      },
+      willClose: () => {
+        Swal.stopProgress?.();
+      }
+    });
+  };
 
   const handleJoinRoom = () => { 
     if (!roomId.trim()) {
@@ -66,6 +113,7 @@ function LandingPage() {
       });
       return;
     }
+    showLoader('Joining Room...');
     socket.emit('joinRoom', roomId);
   };
 
@@ -79,6 +127,7 @@ function LandingPage() {
       });
       return;
     }
+    showLoader('Creating Room...');
     socket.emit('joinRoom', roomId);
   };
 
@@ -98,7 +147,6 @@ function LandingPage() {
         padding: '1.5rem',
         timerProgressBar: true,
       });
-
     } catch (error) {
       console.error("Logout Error: ", error.response ? error.response.data : error.message);
     }
@@ -106,6 +154,7 @@ function LandingPage() {
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white px-6 sm:px-0 relative">
+      {/* Auth Buttons */}
       {user ? (
         <button
           className="absolute top-4 right-4 bg-red-500 px-5 py-2 rounded-lg text-white font-bold shadow-lg hover:bg-red-600 transition-all duration-300 flex items-center gap-2"
@@ -136,13 +185,13 @@ function LandingPage() {
 
         <div className="flex gap-6">
           <button 
-            className="Button px-6 sm:px-8 py-3 sm:py-4 text-lg font-semibold text-white bg-blue-700 rounded-xl shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-all duration-300 cursor-pointer"
+            className="px-8 py-4 text-lg font-semibold text-white bg-blue-700 rounded-xl shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-all duration-300 cursor-pointer"
             onClick={handleCreateRoom}
           >
             Create Room
           </button>
           <button 
-            className="Button px-6 sm:px-8 py-3 sm:py-4 text-lg font-semibold text-white bg-green-700 rounded-xl shadow-md hover:bg-green-600 focus:ring-2 focus:ring-green-300 transition-all duration-300 cursor-pointer"
+            className="px-8 py-4 text-lg font-semibold text-white bg-green-700 rounded-xl shadow-md hover:bg-green-600 focus:ring-2 focus:ring-green-300 transition-all duration-300 cursor-pointer"
             onClick={handleJoinRoom}
           >
             Join Room
@@ -154,7 +203,7 @@ function LandingPage() {
             type="text" 
             name='code'
             placeholder="Enter Room Code"
-            className='border-b outline-none text-white text-center px-4 py-2 lg:text-xl md:text-lg w-full rounded-md shadow-md focus:ring-2 focus:ring-green-600'
+            className='border-b outline-none text-white text-center px-4 py-2 lg:text-xl md:text-lg w-full rounded-md shadow-md focus:ring-2 focus:ring-green-600 bg-transparent placeholder-gray-400'
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)} 
           />

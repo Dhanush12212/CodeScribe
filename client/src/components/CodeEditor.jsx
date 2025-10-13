@@ -4,20 +4,23 @@ import LanguageSelector from './LanguageSelector';
 import { CODE_SNIPPETS } from '../constants';
 import Output from './Output';
 import { socket } from '../socket/socket';
+import { ChevronDown } from 'lucide-react';
 
 const THEMES = [
   { label: "Dark", value: "vs-dark" },
   { label: "Light", value: "light" },
   { label: "High Contrast Dark", value: "hc-black" },
   { label: "High Contrast Light", value: "hc-light" },
-  { label: "Monokai", value: "monokai" }, 
+  { label: "Monokai", value: "monokai" },
 ];
 
 function CodeEditor({ roomId }) {
   const [language, setLanguage] = useState('javascript');
   const [theme, setTheme] = useState('vs-dark');
   const [value, setValue] = useState(CODE_SNIPPETS['javascript']);
+  const [themeOpen, setThemeOpen] = useState(false);
   const editorRef = useRef(null);
+  const themeRef = useRef(null);
 
   useEffect(() => {
     socket.connect();
@@ -50,6 +53,7 @@ function CodeEditor({ roomId }) {
 
   const onSelectTheme = (selectedTheme) => {
     setTheme(selectedTheme);
+    setThemeOpen(false);
   };
 
   const handleOnChange = (newCode) => {
@@ -62,27 +66,54 @@ function CodeEditor({ roomId }) {
     editor.focus();
   };
 
+  // 🔹 Close theme dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (themeRef.current && !themeRef.current.contains(event.target)) {
+        setThemeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <div className="w-full flex flex-col md:flex-row gap-4 items-stretch">
-      
       {/* Code Editor */}
       <div className="w-full lg:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] lg:h-[90vh]">
-        <div className="flex gap-4 mb-2">
+        <div className="flex gap-4 mb-2 items-center">
           <LanguageSelector language={language} onSelect={onSelectLanguage} />
 
-          {/* Theme Selector Dropdown */}
-          <select
-            value={theme}
-            onChange={(e) => onSelectTheme(e.target.value)}
-            className="bg-gray-800 text-white text-sm px-2 py-1 rounded-lg border-gray-600 focus:outline-none hover:bg-gray-700 transition-colors duration-200 shadow-sm w-36 h-10 mt-9"
-          >
-            {THEMES.map((t) => (
-              <option key={t.value} value={t.value} className="bg-gray-800 text-white">
-                {t.label}
-              </option>
-            ))}
-          </select>
+          {/* 🌙 Theme Selector (matches LanguageSelector style) */}
+          <div ref={themeRef} className="relative inline-block text-left">
+            <button
+              onClick={() => setThemeOpen(!themeOpen)}
+              className="inline-flex justify-between items-center px-4 py-2 w-44 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700 focus:outline-none"
+            >
+              {THEMES.find((t) => t.value === theme)?.label || 'Select Theme'}
+              <ChevronDown
+                className={`ml-2 h-4 w-4 transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
 
+            {themeOpen && (
+              <ul className="absolute mt-2 w-44 rounded-md shadow-lg bg-gray-900 ring-1 ring-black ring-opacity-5 z-10 max-h-60 overflow-y-auto animate-fadeIn">
+                {THEMES.map((t) => (
+                  <li
+                    key={t.value}
+                    onClick={() => onSelectTheme(t.value)}
+                    className={`cursor-pointer px-1 py-2 text-sm md:text-base font-semibold transition-colors duration-150 ${
+                      theme === t.value
+                        ? 'bg-gray-800 text-blue-400'
+                        : 'text-gray-200 hover:bg-gray-800 hover:text-blue-400'
+                    }`}
+                  >
+                    {t.label}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <Editor
@@ -95,11 +126,22 @@ function CodeEditor({ roomId }) {
           onChange={handleOnChange}
         />
       </div>
-      
+
       {/* Output Panel */}
       <div className="w-full lg:w-1/2 h-screen md:h-[70vh] lg:h-[100vh] border-gray-700">
         <Output editorRef={editorRef} language={language} />
       </div>
+
+      {/* Dropdown Animation */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.15s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
