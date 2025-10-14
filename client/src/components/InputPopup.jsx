@@ -4,13 +4,13 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
   const [localInput, setLocalInput] = useState(inputValue || "");
 
   const handleSubmit = () => {
-    if (localInput.trim() === "") return; // prevent empty submission
+    if (localInput.trim() === "") return;  
     onSubmit(localInput);
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault(); // prevent newline
+      e.preventDefault(); 
       handleSubmit();
     }
   };

@@ -6,9 +6,8 @@ const languages = Object.entries(LANGUAGE_VERSIONS);
 
 function LanguageSelector({ language, onSelect }) {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef(null); // ref for outside click detection
-
-  // 🔹 Detect outside click and close dropdown
+  const dropdownRef = useRef(null);  
+ 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -55,8 +54,7 @@ function LanguageSelector({ language, onSelect }) {
           ))}
         </ul>
       )}
-
-      {/* Simple animation for dropdown */}
+ 
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-4px); }

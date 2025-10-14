@@ -14,7 +14,7 @@ import {
 
 const MySwal = withReactContent(Swal);
 
-function LandingPage() {
+function RoomAccess() {
   const [roomId, setRoomId] = useState(""); 
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
@@ -102,7 +102,6 @@ function LandingPage() {
       }
     });
   };
-
   const handleJoinRoom = () => { 
     if (!roomId.trim()) {
       MySwal.fire({
@@ -112,11 +111,14 @@ function LandingPage() {
         confirmButtonColor: '#16A34A',
       });
       return;
-    }
+    } 
     showLoader('Joining Room...');
-    socket.emit('joinRoom', roomId);
+  
+    setTimeout(() => {
+      socket.emit('joinRoom', roomId);
+    }, 1500);
   };
-
+  
   const handleCreateRoom = () => {
     if (!roomId.trim()) {
       MySwal.fire({
@@ -127,9 +129,14 @@ function LandingPage() {
       });
       return;
     }
+  
     showLoader('Creating Room...');
-    socket.emit('joinRoom', roomId);
+  
+    setTimeout(() => {
+      socket.emit('joinRoom', roomId);
+    }, 1500);
   };
+
 
   const handleLogout = async () => {
     try {
@@ -213,4 +220,4 @@ function LandingPage() {
   );
 }
 
-export default LandingPage;
+export default RoomAccess;

@@ -2,7 +2,7 @@ import { Editor } from '@monaco-editor/react';
 import React, { useState, useRef, useEffect } from 'react';
 import LanguageSelector from './LanguageSelector';
 import { CODE_SNIPPETS } from '../constants';
-import Output from './Output';
+import ActionPanel from "./ActionPanel";
 import { socket } from '../socket/socket';
 import { ChevronDown } from 'lucide-react';
 
@@ -57,6 +57,7 @@ function CodeEditor({ roomId }) {
   };
 
   const handleOnChange = (newCode) => {
+    e.preventDefault
     setValue(newCode);
     socket.emit('updatedCode', { roomId, newCode });
   };
@@ -65,8 +66,7 @@ function CodeEditor({ roomId }) {
     editorRef.current = editor;
     editor.focus();
   };
-
-  // 🔹 Close theme dropdown on outside click
+ 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (themeRef.current && !themeRef.current.contains(event.target)) {
@@ -83,8 +83,7 @@ function CodeEditor({ roomId }) {
       <div className="w-full lg:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] lg:h-[90vh]">
         <div className="flex gap-4 mb-2 items-center">
           <LanguageSelector language={language} onSelect={onSelectLanguage} />
-
-          {/* 🌙 Theme Selector (matches LanguageSelector style) */}
+ 
           <div ref={themeRef} className="relative inline-block text-left">
             <button
               onClick={() => setThemeOpen(!themeOpen)}
@@ -127,12 +126,12 @@ function CodeEditor({ roomId }) {
         />
       </div>
 
-      {/* Output Panel */}
+      {/* Action Panel */}
       <div className="w-full lg:w-1/2 h-screen md:h-[70vh] lg:h-[100vh] border-gray-700">
-        <Output editorRef={editorRef} language={language} />
+        <ActionPanel editorRef={editorRef} language={language} />
       </div>
 
-      {/* Dropdown Animation */}
+ 
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-4px); }

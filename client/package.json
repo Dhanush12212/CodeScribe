@@ -18,6 +18,7 @@
     "@react-oauth/google": "^0.12.2",
     "@tailwindcss/vite": "^4.0.9",
     "axios": "^1.8.1",
+    "clsx": "^2.1.1",
     "frame": "^1.0.0-alpha.2",
     "framer-motion": "^12.4.10",
     "lucide-react": "^0.477.0",
