@@ -1,18 +1,32 @@
 import React, { useState } from "react";
-import { Info } from "lucide-react"; // 🔹 import icon
-import Output from "./Actions/Output";
+import { Info } from "lucide-react";
+import CodeRunner from "./Actions/CodeRunner";
 import CodeAssisstant from "./Actions/CodeAssisstant";
 import CodeExplain from "./Actions/CodeExplain";
 import RelatedPrograms from "./Actions/RelatedPrograms";
 
 const ActionPanel = ({ editorRef, language }) => {
-  const [activeComponent, setActiveComponent] = useState("output");
+  const [activeComponent, setActiveComponent] = useState("CodeRunner");
   const [showInfo, setShowInfo] = useState(false);
+ 
+  const [showRunPopup, setShowRunPopup] = useState(false);
+
+  const handleRunClick = () => {
+    setActiveComponent("CodeRunner");
+    setShowRunPopup(true);  
+  };
 
   const renderComponent = () => {
     switch (activeComponent) {
-      case "output":
-        return <Output editorRef={editorRef} language={language} />;
+      case "CodeRunner":
+        return (
+          <CodeRunner
+            editorRef={editorRef}
+            language={language}
+            showRunPopup={showRunPopup}
+            setShowRunPopup={setShowRunPopup}
+          />
+        );
       case "Code Assisstant":
         return <CodeAssisstant />;
       case "Explain Code":
@@ -26,15 +40,13 @@ const ActionPanel = ({ editorRef, language }) => {
 
   return (
     <div className="flex flex-col w-full mt-2 relative">
-      {/* --- Buttons Row with Info Icon --- */}
       <div className="flex gap-3 w-full items-center mx-2">
-        {/* Buttons */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1"> 
           <button
-            onClick={() => setActiveComponent("output")}
+            onClick={handleRunClick}
             className={`w-full py-3 rounded-md font-medium border transition-all duration-200 ${
-              activeComponent === "output"
-                ? "bg-green-600 text-white border-green-600"
+              activeComponent === "CodeRunner"
+                ? "bg-green-700 text-white border-green-600"
                 : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
             }`}
           >
@@ -84,19 +96,18 @@ const ActionPanel = ({ editorRef, language }) => {
           <Info size={22} />
         </button>
       </div>
- 
+
       <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-2">
         {renderComponent()}
       </div>
 
-      {/* --- Info Popup Modal --- */}
+      {/* --- Info Popup --- */}
       {showInfo && (
         <div className="fixed inset-0 flex justify-center items-center backdrop-blur-[3px] bg-black/20 z-50">
-          <div className="bg-[#1a1a1a] text-white rounded-lg shadow-lg p-8 w-[95%] max-w-2xl h-[50vh] overflow-y-auto border border-yellow-600">
+          <div className="bg-[#1a1a1a] text-white rounded-lg shadow-lg p-8 w-[95%] max-w-2xl h-[40vh] overflow-y-auto border border-yellow-600">
             <h2 className="text-2xl font-bold mb-6 text-yellow-400 text-center">
               Feature Information
             </h2>
-
             <ul className="space-y-5 text-base text-gray-300 leading-relaxed">
               <li>
                 <span className="font-semibold text-green-400">Run Code:</span>{" "}
@@ -104,17 +115,15 @@ const ActionPanel = ({ editorRef, language }) => {
               </li>
               <li>
                 <span className="font-semibold text-blue-400">Code Assistant:</span>{" "}
-                An AI-driven assistant that helps you debug, optimize, or generate
-                new code based on your input.
+                AI assistant that helps debug, optimize, or generate code.
               </li>
               <li>
                 <span className="font-semibold text-purple-400">Explain Code:</span>{" "}
-                Offers a line-by-line explanation of your code to help you
-                understand its logic and structure.
+                Explains your code logic and structure.
               </li>
               <li>
-                <span className="font-semibold text-gray-600">Related Programs:</span>{" "}
-                Displays similar or relevant coding examples to deepen your learning.
+                <span className="font-semibold text-gray-400">Related Programs:</span>{" "}
+                Shows relevant code examples.
               </li>
             </ul>
 

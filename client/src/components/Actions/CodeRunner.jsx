@@ -1,18 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { executeCode } from "../../api";
 import { socket } from "../../socket/socket";
-import InputPopup from "../InputPopup"; 
+import InputPopup from "../InputPopup";
 
-const Output = ({ editorRef, language }) => {
+const CodeRunner = ({ editorRef, language, showRunPopup, setShowRunPopup }) => {
   const [output, setOutput] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isError, setIsError] = useState(false);
- 
-  const handleRun = () => {
-    setShowModal(true);
-  };
 
   const runCode = async (userInput) => {
     const sourceCode = editorRef.current.getValue();
@@ -29,39 +24,45 @@ const Output = ({ editorRef, language }) => {
       alert(error.message || "Unable to run code");
     } finally {
       setIsLoading(false);
-      setShowModal(false);
+      setShowRunPopup(false);
       setInputValue("");
     }
   };
 
+  // 🔹 Open modal when ActionPanel triggers it
+  useEffect(() => {
+    if (showRunPopup) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [showRunPopup]);
+
   return (
     <div className="relative w-full h-full">
-      {showModal && (
+      {showRunPopup && (
         <InputPopup
           inputValue={inputValue}
           setInputValue={setInputValue}
           onSubmit={runCode}
-          onCancel={() => setShowModal(false)}
+          onCancel={() => setShowRunPopup(false)}
         />
       )}
 
-      <div className="transition-all">
-
-        <div
-          className={`rounded-md h-[85vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-3 border border-red${
-            isError ? "text-red-400 border-red-500" : "text-gray-200 border-[#333]"
-          }`}
-        >
-          <p className="mb-3 text-xl text-gray-500 text-center font-bold">Output</p>
-          {isLoading
-            ? "Running..."
-            : output
-            ? output.map((line, i) => <p key={i}>{line}</p>)
-            : "Click 'Run Code' from Action Panel to see the output here."}
-        </div>
+      <div
+        className={`rounded-md h-[85vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-3 ${
+          isError ? "text-red-400 border-red-500" : "text-gray-200 border-[#333]"
+        } border`}
+      >
+        <p className="mb-3 text-xl text-gray-500 text-center font-bold">Output</p>
+        {isLoading
+          ? "Running..."
+          : output
+          ? output.map((line, i) => <p key={i}>{line}</p>)
+          : "Click 'Run Code' to execute and view output here."}
       </div>
     </div>
   );
 };
 
-export default Output;
+export default CodeRunner;
