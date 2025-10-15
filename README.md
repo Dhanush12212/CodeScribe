@@ -1,4 +1,4 @@
-# CodeScribe - A Live Collaborative Code Editor
+# CodeScribe - A Live Collaborative AI Code Editor
 
 CodeScribe is a real-time, collaborative code editor designed for seamless pair programming, coding interviews, and team collaboration. With features like live code sharing, AI assistance, and code execution, CodeScribe makes remote coding sessions effortless and intelligent.
 
@@ -31,7 +31,7 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
 ### AI & Code Execution
 - **OpenAI API** – Powers “Ask AI” and “Explain Code” features.  
 - **Flask (Python)** – Handles AI-based code explanation and related program generation.  
-- **Docker / Child Process Sandbox** – Provides secure execution for running user code.
+- **Jugde0 Api** – Provides secure execution for running user code.
 
 ### Backend
 - **Node.js** – JavaScript runtime for the backend.  
@@ -48,14 +48,14 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
 
 # Instructions
 
-## 1. Clone the Project
+### 1. Clone the Project
 
    - Clone the repository using the command:
      ```sh
      git clone https://github.com/Dhanush12212/CodeScribe.git
      ```
 
-## 2. Install Dependencies
+### 2. Install Dependencies
 
    - Navigate to the backend directory and install dependencies:
      ```sh
@@ -68,7 +68,7 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
      npm install
      ```
 
-## 3. Environment Variables
+### 3. Environment Variables
 
    - Create a `.env` file in the **backend** directory and add:
      ```sh
@@ -76,7 +76,7 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
      JWT_SECRET=your_secret_key
      ```
 
-## 4. Start Backend Server
+### 4. Start Backend Server
 
    - Start the backend server using the command:
      ```sh
@@ -84,7 +84,7 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
      npm start
      ```
 
-## 5. Start Frontend
+### 5. Start Frontend
 
    - Start the frontend application with:
      ```sh
@@ -92,7 +92,7 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
      npm run dev
      ```
 
-## 6. Access the Application
+### 6. Access the Application
 
    - Open `http://localhost:5173` in your browser to start using CodeScribe.
 
