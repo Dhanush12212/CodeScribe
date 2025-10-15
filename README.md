@@ -57,10 +57,7 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
 
 ### 2. Install Dependencies
 
-   - Navigate to the backend directory and install dependencies:
-     ```sh
-     cd backend
-     npm install
+   -      npm install
      ```
    - Similarly, move to the frontend directory and install dependencies:
      ```sh
@@ -95,8 +92,3 @@ CodeScribe is a real-time, collaborative code editor designed for seamless pair 
 ### 6. Access the Application
 
    - Open `http://localhost:5173` in your browser to start using CodeScribe.
-
-# Contributing
-
-We welcome contributions! Feel free to fork the repository, create a feature branch, and submit a pull request. 
-
