@@ -1,30 +1,50 @@
 # CodeScribe - A Live Collaborative Code Editor
 
-CodeScribe is a real-time, collaborative code editor designed for seamless pair programming, coding interviews, and team collaboration. With features like live code sharing and Code execution. CodeScribe makes remote coding sessions effortless.
+CodeScribe is a real-time, collaborative code editor designed for seamless pair programming, coding interviews, and team collaboration. With features like live code sharing, AI assistance, and code execution, CodeScribe makes remote coding sessions effortless and intelligent.
+
+---
 
 ## Features
 
-- **Real-time Collaboration**: Instantly sync code across multiple users. 
-- **Rich Code Editing**: Powered by Monaco Editor.
-- **Room-Based Collaboration**: Join or create coding rooms for focused teamwork. 
-- **User Authentication**: Secure login and registration using JWT. 
+- **Real-time Collaboration**: Instantly sync code across multiple users using Socket.IO.  
+- **Rich Code Editing**: Powered by the Monaco Editor (used in VS Code).  
+- **Room-Based Collaboration**: Create or join secure coding rooms for focused teamwork.  
+- **User Authentication**: Secure login and registration with JWT and bcrypt.js.  
+- **Code Execution**: Run code directly inside the editor and view real-time output.  
+- **Ask AI**: Get instant explanations, code analysis, and debugging tips for your code.  
+- **Related Programs**: AI suggests similar programs and examples in a separate section.  
+- **Persistent Code Storage**: Save, load, and share code snippets.  
+- **Scalable & Extensible**: Modular design ready for future features like voice or video integration.
 
-# Tech Stack
+---
 
-## Frontend
-- **React.js**: For building the user interface.
-- **Monaco Editor**: A powerful code editor with syntax highlighting.
-- **Socket.io Client**: Enables real-time communication with the backend. 
-- **React Router**: For smooth navigation.
-- **Axios**: Efficient API requests.
+## Tech Stack
 
-## Backend
-- **Node.js**: JavaScript runtime for server-side scripting.
-- **Express.js**: Web framework for handling API requests.
-- **Socket.io**: Real-time communication between users.
-- **MongoDB**: NoSQL database for storing user sessions and code snippets.
-- **JWT & bcrypt.js**: Authentication & security.
-- **dotenv**: Manage environment variables.
+### Frontend
+- **React.js** – For building an interactive and modular user interface.  
+- **Monaco Editor** – Full-featured browser-based code editor.  
+- **Socket.IO Client** – Enables real-time communication with the backend.  
+- **React Router** – Handles smooth client-side navigation.  
+- **Axios** – REST API communication.  
+- **Tailwind CSS + shadcn/ui** – Responsive and modern UI components.
+
+### AI & Code Execution
+- **OpenAI API** – Powers “Ask AI” and “Explain Code” features.  
+- **Flask (Python)** – Handles AI-based code explanation and related program generation.  
+- **Docker / Child Process Sandbox** – Provides secure execution for running user code.
+
+### Backend
+- **Node.js** – JavaScript runtime for the backend.  
+- **Express.js** – Web framework for API management.  
+- **Socket.IO** – Real-time, bidirectional event-based communication.  
+- **MongoDB (Mongoose)** – Stores users, sessions, and code snippets.  
+- **JWT & bcrypt.js** – Authentication and password encryption.  
+- **dotenv** – Environment variable management.  
+- **Cors & Helmet** – Security and cross-origin protection.
+
+---
+
+## System Architecture Overview
 
 # Instructions
 
