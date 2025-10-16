@@ -155,13 +155,13 @@ function RoomAccess() {
       {/* 🌟 Floating Coding Languages Background */}
       <div className="absolute inset-0 z-0 select-none">
         {[
-          { name: "HTML", color: "text-orange-400", top: "10%", left: "5%" },
-          { name: "CSS", color: "text-blue-400", top: "25%", left: "80%" },
+          { name: "JAVA", color: "text-orange-400", top: "10%", left: "5%" },
+          { name: "PHP", color: "text-blue-400", top: "25%", left: "80%" },
           { name: "JavaScript", color: "text-yellow-400", top: "50%", left: "10%" },
           { name: "Python", color: "text-green-400", top: "65%", left: "70%" },
           { name: "C++", color: "text-blue-300", top: "80%", left: "40%" },
           { name: "React", color: "text-cyan-400", top: "35%", left: "50%" },
-          { name: "Node.js", color: "text-lime-400", top: "15%", left: "60%" },
+          { name: "C++", color: "text-lime-400", top: "15%", left: "60%" },
         ].map((lang, index) => (
           <p
             key={index}

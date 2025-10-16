@@ -12,7 +12,7 @@ const router = Router();
 
 router.route('/login').post(loginUser);
 router.route('/register').post(registerUser);
-router.route('/logout').put(verifyJWT, logoutUser);
+router.route('/logout').put(logoutUser);
 router.route('/isLoggedIn').get(verifyJWT, checkLog);
 router.route('/google').post(googleLogin); 
 
