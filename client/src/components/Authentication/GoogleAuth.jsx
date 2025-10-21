@@ -22,7 +22,7 @@ const GoogleAuth = ({ clientID , setMessage, navigate }) => {
       localStorage.setItem('user', JSON.stringify(user));
       
       setMessage({ text: "🎉 Login Successful!", type: "success" });
-      setTimeout(() => navigate("/"), 500);
+      setTimeout(() => navigate("/room"), 500);
     } catch (error) {
       console.error("Login failed:", error.response?.data || error.message);
       setMessage({ text: "Google Login Failed", type: "error" });

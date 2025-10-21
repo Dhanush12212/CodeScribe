@@ -27,7 +27,7 @@ function Login({ login }) {
       const { user } = response.data.data;
       localStorage.setItem('user', JSON.stringify(user));      
       setMessage({ text: "🎉 Login Successful!", type: "success" });
-      setTimeout(() => navigate("/"), 500);
+      setTimeout(() => navigate("/room"), 500);
     } catch (error) {
       console.error("Login failed:", error.response?.data || error.message);
       setMessage({ text: "Login Failed. Check your credentials.", type: "error" });
@@ -63,7 +63,8 @@ function Login({ login }) {
       {/* Login Form */}
       <form
         onSubmit={handleSubmit}
-        className="relative z-20 w-full max-w-lg sm:max-w-xl p-12 sm:p-16 bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col items-center gap-6 text-white border border-white/20"
+        className="relative z-20 w-full max-w-lg sm:max-w-xl p-12 sm:p-16 bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl flex flex-col items-center gap-6 text-white"
+        style={{ border: "1px solid rgba(255,255,255,0.2)" }}
       >
         <h1 className="text-3xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 text-center mb-2">
           Welcome Back
@@ -77,7 +78,10 @@ function Login({ login }) {
 
         {/* Inputs */}
         <div className="w-full flex flex-col gap-6">
-          <div className="flex items-center gap-3 bg-gray-800 p-5 rounded-2xl hover:bg-gray-700 transition-all duration-300 shadow-inner">
+          <div
+            className="flex items-center gap-3 bg-gray-800 p-5 rounded-2xl hover:bg-gray-700 transition-all duration-300 shadow-inner"
+            style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+          >
             <MdOutlineMail className="text-white text-xl" />
             <input
               type="email"
@@ -89,7 +93,10 @@ function Login({ login }) {
             />
           </div>
 
-          <div className="flex items-center gap-3 bg-gray-800 p-5 rounded-2xl relative hover:bg-gray-700 transition-all duration-300 shadow-inner">
+          <div
+            className="flex items-center gap-3 bg-gray-800 p-5 rounded-2xl relative hover:bg-gray-700 transition-all duration-300 shadow-inner"
+            style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+          >
             <MdOutlinePassword className="text-white text-xl" />
             <input
               type={showPassword ? "text" : "password"}
@@ -117,6 +124,7 @@ function Login({ login }) {
         <button
           type="submit"
           className="w-full py-4 text-lg sm:text-xl font-semibold text-white bg-gradient-to-r from-green-400 to-blue-500 rounded-2xl shadow-lg hover:from-green-500 hover:to-blue-600 transition-all duration-300"
+          style={{ border: "1px solid rgba(255,255,255,0.2)" }}
         >
           Login
         </button>

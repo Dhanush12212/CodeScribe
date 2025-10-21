@@ -2,7 +2,7 @@ import { Editor } from '@monaco-editor/react';
 import React, { useState, useRef, useEffect } from 'react';
 import LanguageSelector from './LanguageSelector';
 import { CODE_SNIPPETS } from '../constants';
-import ActionPanel from "./ActionPanel";
+import ActionPanel from './ActionPanel';
 import { socket } from '../socket/socket';
 import { ChevronDown } from 'lucide-react';
 
@@ -57,7 +57,6 @@ function CodeEditor({ roomId }) {
   };
 
   const handleOnChange = (newCode) => {
-    e.preventDefault
     setValue(newCode);
     socket.emit('updatedCode', { roomId, newCode });
   };
@@ -66,7 +65,7 @@ function CodeEditor({ roomId }) {
     editorRef.current = editor;
     editor.focus();
   };
- 
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (themeRef.current && !themeRef.current.contains(event.target)) {
@@ -78,12 +77,12 @@ function CodeEditor({ roomId }) {
   }, []);
 
   return (
-    <div className="w-full flex flex-col md:flex-row gap-4 items-stretch">
+    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300">
       {/* Code Editor */}
-      <div className="w-full lg:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] lg:h-[90vh]">
-        <div className="flex gap-4 mb-2 items-center">
+      <div className="w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
+        <div className="flex gap-4 mb-2 items-center p-2">
           <LanguageSelector language={language} onSelect={onSelectLanguage} />
- 
+
           <div ref={themeRef} className="relative inline-block text-left">
             <button
               onClick={() => setThemeOpen(!themeOpen)}
@@ -101,7 +100,7 @@ function CodeEditor({ roomId }) {
                   <li
                     key={t.value}
                     onClick={() => onSelectTheme(t.value)}
-                    className={`cursor-pointer px-1 py-2 text-sm md:text-base font-semibold transition-colors duration-150 ${
+                    className={`cursor-pointer px-2 py-2 text-sm md:text-base font-semibold transition-colors duration-150 ${
                       theme === t.value
                         ? 'bg-gray-800 text-blue-400'
                         : 'text-gray-200 hover:bg-gray-800 hover:text-blue-400'
@@ -127,11 +126,11 @@ function CodeEditor({ roomId }) {
       </div>
 
       {/* Action Panel */}
-      <div className="w-full lg:w-1/2 h-screen md:h-[70vh] lg:h-[100vh] border-gray-700">
+      <div className="w-full custom-xl:w-1/2 h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         <ActionPanel editorRef={editorRef} language={language} />
       </div>
 
- 
+      {/* Custom Styles */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-4px); }
@@ -139,6 +138,22 @@ function CodeEditor({ roomId }) {
         }
         .animate-fadeIn {
           animation: fadeIn 0.15s ease-out;
+        }
+
+        /* 👇 Custom breakpoint for 1100px */
+        @media (min-width: 1200px) {
+          .custom-xl\\:flex-row {
+            flex-direction: row !important;
+          }
+          .custom-xl\\:w-3\\/4 {
+            width: 75% !important;
+          }
+          .custom-xl\\:w-1\\/2 {
+            width: 50% !important;
+          }
+          .custom-xl\\:h-\\[90vh\\] {
+            height: 90vh !important;
+          }
         }
       `}</style>
     </div>

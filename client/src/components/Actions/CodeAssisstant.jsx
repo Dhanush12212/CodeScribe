@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react';
 
 function CodeAssisstant() {
   const [query, setQuery] = useState('');
@@ -9,48 +9,70 @@ function CodeAssisstant() {
     console.log("User asked:", query);
     setQuery('');
     if (textareaRef.current) {
-      textareaRef.current.style.height = "40px"; // reset to initial height
+      textareaRef.current.style.height = "40px"; // reset height
     }
   };
 
   const handleInput = (e) => {
     setQuery(e.target.value);
-
-    // Auto-expand height
     if (textareaRef.current) {
-      textareaRef.current.style.height = "40px"; // reset to minimum height
+      textareaRef.current.style.height = "40px"; // reset to min height
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   };
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "40px"; // initial height
+      textareaRef.current.style.height = "40px";
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   }, []);
 
   return (
-    <div className='relative h-[85vh] md:h-[75vh] lg:h-[90vh] border flex flex-col justify-end bg-gray-900 text-white'>
-      
+    <div
+      className="relative h-[85vh] md:h-[75vh] lg:h-[90vh] flex flex-col justify-end text-white"
+      style={{
+        backgroundColor: "#111827",
+        border: "1px solid #374151", 
+      }}
+    >
       {/* Bottom input bar */}
-      <div className='p-3 border-t border-gray-700 flex items-end gap-2 bg-gray-800 sticky bottom-0'>
+      <div
+        className="p-3 flex items-end gap-2 sticky bottom-0"
+        style={{
+          backgroundColor: "#1f2937", // gray-800
+          borderTop: "1px solid #374151", // gray-700
+        }}
+      >
         <textarea
           ref={textareaRef}
           value={query}
           onChange={handleInput}
           placeholder="Type your question..."
-          className="flex-1 outline-none bg-gray-700 text-white rounded-md p-3 resize-none overflow-hidden text-lg"
+          className="flex-1 outline-none text-white rounded-md p-3 resize-none overflow-hidden text-lg"
+          style={{
+            backgroundColor: "#374151", // gray-700
+            border: "1px solid #4b5563", // gray-600
+            transition: "border-color 0.3s ease",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#3b82f6")} // blue-500 on focus
+          onBlur={(e) => (e.target.style.borderColor = "#4b5563")} // revert to gray
         />
-        <button 
+        <button
           onClick={handleAsk}
-          className="bg-blue-600 text-white px-5 py-3 rounded-md hover:bg-blue-700 transition flex-shrink-0 mb-1"
+          className="text-white px-5 py-3 rounded-md flex-shrink-0 mb-1 transition-all duration-200 shadow-md"
+          style={{
+            backgroundColor: "#2563eb", // blue-600
+            border: "1px solid #2563eb",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")} // blue-700
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
         >
           Ask
         </button>
       </div>
     </div>
-  )
+  );
 }
 
-export default CodeAssisstant
+export default CodeAssisstant;

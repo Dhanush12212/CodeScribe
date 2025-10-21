@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { executeCode } from "../../api";
-import { socket } from "../../socket/socket";
 import InputPopup from "../InputPopup";
 
 const CodeRunner = ({ editorRef, language, showRunPopup, setShowRunPopup }) => {
@@ -29,17 +28,9 @@ const CodeRunner = ({ editorRef, language, showRunPopup, setShowRunPopup }) => {
     }
   };
 
-  // 🔹 Open modal when ActionPanel triggers it
-  useEffect(() => {
-    if (showRunPopup) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-  }, [showRunPopup]);
-
   return (
     <div className="relative w-full h-full">
+      {/* Inline Popup */}
       {showRunPopup && (
         <InputPopup
           inputValue={inputValue}
@@ -49,17 +40,27 @@ const CodeRunner = ({ editorRef, language, showRunPopup, setShowRunPopup }) => {
         />
       )}
 
+      {/* Code Output */}
       <div
-        className={`rounded-md h-[85vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-3 ${
-          isError ? "text-red-400 border-red-500" : "text-gray-200 border-[#333]"
-        } border`}
+        className="rounded-md h-[85vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-3 text-gray-200"
+        style={{
+          border: `1px solid ${isError ? "#ef4444" : "#333"}`, // red-500 : custom dark gray
+          backgroundColor: "#0f0f0f",
+          transition: "border-color 0.3s ease",
+        }}
       >
         <p className="mb-3 text-xl text-gray-500 text-center font-bold">Output</p>
-        {isLoading
-          ? "Running..."
-          : output
-          ? output.map((line, i) => <p key={i}>{line}</p>)
-          : "Click 'Run Code' to execute and view output here."}
+
+        {isLoading ? (
+          <p className="text-center text-gray-400">Running...</p>
+        ) : output ? (
+          output.map((line, i) => <p key={i}>{line}</p>)
+        ) : (
+          <p className="text-center text-gray-500">
+            Click <span className="text-green-400 font-semibold">'Run Code'</span> to execute and
+            view output here.
+          </p>
+        )}
       </div>
     </div>
   );

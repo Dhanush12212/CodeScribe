@@ -4,25 +4,31 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
   const [localInput, setLocalInput] = useState(inputValue || "");
 
   const handleSubmit = () => {
-    if (localInput.trim() === "") return;  
+    if (localInput.trim() === "") return;
     onSubmit(localInput);
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault(); 
+      e.preventDefault();
       handleSubmit();
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-center items-center">
-      {/* Overlay with blur */}
-      <div className="absolute inset-0 backdrop-blur-[1px] bg-black/40"></div>
+    <div className="absolute inset-0 z-20 flex justify-center items-center">
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/40 rounded-md"></div>
 
       {/* Popup content */}
-      <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-2xl w-2/5 max-w-2xl shadow-2xl animate-fadeIn">
-        <h2 className="text-white mb-6 text-2xl font-bold text-center">
+      <div
+        className="relative p-6 rounded-2xl w-4/5 max-w-lg shadow-2xl z-30"
+        style={{
+          background: "linear-gradient(to bottom right, #1f2937, #111827)", // from-gray-800 to-gray-900
+          border: "1px solid #4b5563", // gray-600
+        }}
+      >
+        <h2 className="text-white mb-4 text-xl font-bold text-center">
           Enter Your Input
         </h2>
 
@@ -30,20 +36,45 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
           value={localInput}
           onChange={(e) => setLocalInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full p-4 mb-6 rounded-lg border border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-400 resize-none h-48 placeholder-gray-400 text-lg"
+          className="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-green-500 resize-none h-36 placeholder-gray-400 text-base"
           placeholder="Type your input here..."
+          style={{
+            border: "1px solid #4b5563", // gray-600
+            transition: "border-color 0.3s ease",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#22c55e")} // green-500 on focus
+          onBlur={(e) => (e.target.style.borderColor = "#4b5563")} // revert on blur
         />
 
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-6 py-3 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200 shadow-md font-medium"
+            className="px-5 py-2 rounded-lg text-white transition-colors duration-200 shadow-md font-medium"
+            style={{
+              backgroundColor: "#374151", // gray-700
+              border: "1px solid #4b5563",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#4b5563")} // hover gray-600
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#374151")}
           >
             Cancel
           </button>
+
           <button
             onClick={handleSubmit}
-            className="px-6 py-3 rounded-lg bg-gradient-to-r from-green-700 to-green-800 text-white hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-md font-medium"
+            className="px-5 py-2 rounded-lg text-white transition-all duration-200 shadow-md font-medium"
+            style={{
+              background: "linear-gradient(to right, #15803d, #166534)", // from-green-700 to-green-800
+              border: "1px solid #16a34a", // green-600
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background =
+                "linear-gradient(to right, #16a34a, #15803d)") // hover green-600 to green-700
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background =
+                "linear-gradient(to right, #15803d, #166534)")
+            }
           >
             Submit
           </button>

@@ -8,7 +8,6 @@ import RelatedPrograms from "./Actions/RelatedPrograms";
 const ActionPanel = ({ editorRef, language }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
   const [showInfo, setShowInfo] = useState(false);
- 
   const [showRunPopup, setShowRunPopup] = useState(false);
 
   const handleRunClick = () => {
@@ -38,50 +37,88 @@ const ActionPanel = ({ editorRef, language }) => {
     }
   };
 
+  const buttonBaseStyle = "w-full py-3 rounded-md font-medium transition-all duration-200";
+
   return (
     <div className="flex flex-col w-full mt-2 relative">
       <div className="flex gap-3 w-full items-center mx-2">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1"> 
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
           <button
             onClick={handleRunClick}
-            className={`w-full py-3 rounded-md font-medium border transition-all duration-200 ${
-              activeComponent === "CodeRunner"
-                ? "bg-green-700 text-white border-green-600"
-                : "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
-            }`}
+            className={buttonBaseStyle}
+            style={{
+              backgroundColor: activeComponent === "CodeRunner" ? "#166534" : "transparent",
+              color: activeComponent === "CodeRunner" ? "#ffffff" : "#16a34a",
+              border: "1px solid #16a34a",
+            }}
+            onMouseEnter={(e) => {
+              if (activeComponent !== "CodeRunner") e.target.style.backgroundColor = "#16a34a";
+              if (activeComponent !== "CodeRunner") e.target.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              if (activeComponent !== "CodeRunner") e.target.style.backgroundColor = "transparent";
+              if (activeComponent !== "CodeRunner") e.target.style.color = "#16a34a";
+            }}
           >
             Run Code
           </button>
 
           <button
             onClick={() => setActiveComponent("Code Assisstant")}
-            className={`w-full py-3 rounded-md font-medium border transition-all duration-200 ${
-              activeComponent === "Code Assisstant"
-                ? "bg-blue-600 text-white border-blue-600"
-                : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-            }`}
+            className={buttonBaseStyle}
+            style={{
+              backgroundColor: activeComponent === "Code Assisstant" ? "#2563eb" : "transparent",
+              color: activeComponent === "Code Assisstant" ? "#ffffff" : "#2563eb",
+              border: "1px solid #2563eb",
+            }}
+            onMouseEnter={(e) => {
+              if (activeComponent !== "Code Assisstant") e.target.style.backgroundColor = "#2563eb";
+              if (activeComponent !== "Code Assisstant") e.target.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              if (activeComponent !== "Code Assisstant") e.target.style.backgroundColor = "transparent";
+              if (activeComponent !== "Code Assisstant") e.target.style.color = "#2563eb";
+            }}
           >
             Code Assistant
           </button>
 
           <button
             onClick={() => setActiveComponent("Explain Code")}
-            className={`w-full py-3 rounded-md font-medium border transition-all duration-200 ${
-              activeComponent === "Explain Code"
-                ? "bg-purple-600 text-white border-purple-600"
-                : "border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
-            }`}
+            className={buttonBaseStyle}
+            style={{
+              backgroundColor: activeComponent === "Explain Code" ? "#7c3aed" : "transparent",
+              color: activeComponent === "Explain Code" ? "#ffffff" : "#7c3aed",
+              border: "1px solid #7c3aed",
+            }}
+            onMouseEnter={(e) => {
+              if (activeComponent !== "Explain Code") e.target.style.backgroundColor = "#7c3aed";
+              if (activeComponent !== "Explain Code") e.target.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              if (activeComponent !== "Explain Code") e.target.style.backgroundColor = "transparent";
+              if (activeComponent !== "Explain Code") e.target.style.color = "#7c3aed";
+            }}
           >
             Explain Code
           </button>
 
           <button
             onClick={() => setActiveComponent("Related Programs")}
-            className={`w-full py-3 rounded-md font-medium border transition-all duration-200 ${
-              activeComponent === "Related Programs"
-                ? "bg-gray-600 text-white border-gray-600"
-                : "border-gray-600 text-gray-400 hover:bg-gray-600 hover:text-white"
-            }`}
+            className={buttonBaseStyle}
+            style={{
+              backgroundColor: activeComponent === "Related Programs" ? "#4b5563" : "transparent",
+              color: activeComponent === "Related Programs" ? "#ffffff" : "#9ca3af",
+              border: "1px solid #4b5563",
+            }}
+            onMouseEnter={(e) => {
+              if (activeComponent !== "Related Programs") e.target.style.backgroundColor = "#4b5563";
+              if (activeComponent !== "Related Programs") e.target.style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              if (activeComponent !== "Related Programs") e.target.style.backgroundColor = "transparent";
+              if (activeComponent !== "Related Programs") e.target.style.color = "#9ca3af";
+            }}
           >
             Related Programs
           </button>
@@ -90,7 +127,8 @@ const ActionPanel = ({ editorRef, language }) => {
         {/* Info Icon */}
         <button
           onClick={() => setShowInfo(true)}
-          className="p-2 rounded-full border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200"
+          style={{ border: "1px solid #facc15" }}
+          className="p-2 rounded-full text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200"
           title="Feature Info"
         >
           <Info size={22} />
@@ -103,38 +141,35 @@ const ActionPanel = ({ editorRef, language }) => {
 
       {/* --- Info Popup --- */}
       {showInfo && (
-        <div className="fixed inset-0 flex justify-center items-center backdrop-blur-[3px] bg-black/20 z-50">
-          <div className="bg-[#1a1a1a] text-white rounded-lg shadow-lg p-8 w-[95%] max-w-2xl h-[40vh] overflow-y-auto border border-yellow-600">
-            <h2 className="text-2xl font-bold mb-6 text-yellow-400 text-center">
-              Feature Information
-            </h2>
-            <ul className="space-y-5 text-base text-gray-300 leading-relaxed">
-              <li>
-                <span className="font-semibold text-green-400">Run Code:</span>{" "}
-                Executes your written code and displays real-time output.
-              </li>
-              <li>
-                <span className="font-semibold text-blue-400">Code Assistant:</span>{" "}
-                AI assistant that helps debug, optimize, or generate code.
-              </li>
-              <li>
-                <span className="font-semibold text-purple-400">Explain Code:</span>{" "}
-                Explains your code logic and structure.
-              </li>
-              <li>
-                <span className="font-semibold text-gray-400">Related Programs:</span>{" "}
-                Shows relevant code examples.
-              </li>
-            </ul>
-
-            <div className="mt-8 flex justify-center">
-              <button
-                onClick={() => setShowInfo(false)}
-                className="px-6 py-2 rounded-md bg-yellow-600 text-white hover:bg-yellow-500 transition-all"
-              >
-                Close
-              </button>
-            </div>
+        <div
+          className="absolute top-[60px] right-3 w-96 bg-[#1a1a1a] rounded-lg shadow-lg p-4 text-white z-20"
+          style={{ border: "1px solid #facc15" }}
+        >
+          <h3 className="text-xl font-bold text-yellow-400 mb-3 text-center">
+            Feature Information
+          </h3>
+          <ul className="space-y-3 text-gray-300 text-sm">
+            <li>
+              <span className="font-semibold text-green-400">Run Code:</span> Executes your written code and shows real-time output.
+            </li>
+            <li>
+              <span className="font-semibold text-blue-400">Code Assistant:</span> AI helper for debugging, optimizing, or generating code.
+            </li>
+            <li>
+              <span className="font-semibold text-purple-400">Explain Code:</span> Explains your code logic and structure.
+            </li>
+            <li>
+              <span className="font-semibold text-gray-400">Related Programs:</span> Shows relevant code examples.
+            </li>
+          </ul>
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => setShowInfo(false)}
+              style={{ border: "1px solid #facc15" }}
+              className="px-4 py-2 rounded-md bg-yellow-600 text-black font-semibold hover:bg-yellow-500 transition-all"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

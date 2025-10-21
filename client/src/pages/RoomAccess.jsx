@@ -152,7 +152,6 @@ function RoomAccess() {
   return (
     <div className="w-full h-screen relative overflow-hidden bg-gray-900 text-white">
       
-      {/* 🌟 Floating Coding Languages Background */}
       <div className="absolute inset-0 z-0 select-none">
         {[
           { name: "JAVA", color: "text-orange-400", top: "10%", left: "5%" },
@@ -194,7 +193,10 @@ function RoomAccess() {
         )}
 
         {/* Main Card */}
-        <div className="flex flex-col py-20 sm:py-40 items-center text-center gap-8 bg-white/10 backdrop-blur-xl p-8 sm:p-12 rounded-3xl shadow-xl border border-white/20">
+        <div 
+          className="flex flex-col py-20 sm:py-40 items-center text-center gap-8 bg-white/10 backdrop-blur-xl p-8 sm:p-12 rounded-3xl shadow-xl"
+          style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+        >
           <div className="flex flex-col gap-4 text-white">
             <h1 className="lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-green-700 drop-shadow-lg text-center tracking-tight">
               Code Together, Anywhere, Anytime!
@@ -208,12 +210,14 @@ function RoomAccess() {
             <button 
               className="px-8 py-4 text-lg font-semibold text-white bg-blue-700 rounded-xl shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-all duration-300"
               onClick={handleCreateRoom}
+              style={{ border: "1px solid rgba(255,255,255,0.2)" }}
             >
               Create Room
             </button>
             <button 
               className="px-8 py-4 text-lg font-semibold text-white bg-green-700 rounded-xl shadow-md hover:bg-green-600 focus:ring-2 focus:ring-green-300 transition-all duration-300"
               onClick={handleJoinRoom}
+              style={{ border: "1px solid rgba(255,255,255,0.2)" }}
             >
               Join Room
             </button>
@@ -224,9 +228,10 @@ function RoomAccess() {
               type="text" 
               name='code'
               placeholder="Enter Room Code"
-              className='border-b outline-none text-white text-center px-4 py-2 lg:text-xl md:text-lg w-full rounded-md shadow-md focus:ring-2 focus:ring-green-600 bg-transparent placeholder-gray-400'
+              className='outline-none text-white text-center px-4 py-3 lg:text-xl md:text-lg w-full rounded-md shadow-md focus:ring-2 focus:ring-green-600 bg-transparent placeholder-gray-400'
               value={roomId}
-              onChange={(e) => setRoomId(e.target.value)} 
+              onChange={(e) => setRoomId(e.target.value)}
+              style={{ border: "1px solid rgba(255,255,255,0.2)" }}
             />
           </div>
         </div>
