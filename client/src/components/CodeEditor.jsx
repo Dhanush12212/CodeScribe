@@ -1,10 +1,10 @@
 import { Editor } from '@monaco-editor/react';
 import React, { useState, useRef, useEffect } from 'react';
 import LanguageSelector from './LanguageSelector';
-import { CODE_SNIPPETS } from '../constants';
-import ActionPanel from './ActionPanel';
+import { CODE_SNIPPETS } from '../constants'; 
 import { socket } from '../socket/socket';
 import { ChevronDown } from 'lucide-react';
+import ActionView from '../pages/ActionView';
 
 const THEMES = [
   { label: "Dark", value: "vs-dark" },
@@ -127,7 +127,7 @@ function CodeEditor({ roomId }) {
 
       {/* Action Panel */}
       <div className="w-full custom-xl:w-1/2 h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
-        <ActionPanel editorRef={editorRef} language={language} />
+        <ActionView editorRef={editorRef} language={language} />
       </div>
 
       {/* Custom Styles */}
@@ -140,7 +140,6 @@ function CodeEditor({ roomId }) {
           animation: fadeIn 0.15s ease-out;
         }
 
-        /* 👇 Custom breakpoint for 1100px */
         @media (min-width: 1200px) {
           .custom-xl\\:flex-row {
             flex-direction: row !important;

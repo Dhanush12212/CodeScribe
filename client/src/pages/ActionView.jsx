@@ -1,0 +1,92 @@
+// src/components/ActionPanel/ActionView.jsx
+import React, { useState } from "react";
+import CodeRunner from "../components/Actions/CodeRunner"
+import CodeAssisstant from "../components/Actions/CodeAssisstant";
+import CodeExplain from "../components/Actions/CodeExplain";
+import RelatedPrograms from "../components/Actions/RelatedPrograms";
+import ActionButtons from "../components/Actions/ActionButtons";
+
+const ActionView = ({ editorRef, language }) => {
+  const [activeComponent, setActiveComponent] = useState("CodeRunner");
+  const [showInfo, setShowInfo] = useState(false);
+  const [showRunPopup, setShowRunPopup] = useState(false);
+
+  const handleRunClick = () => {
+    setActiveComponent("CodeRunner");
+    setShowRunPopup(true);
+  };
+
+  const renderComponent = () => {
+    switch (activeComponent) {
+      case "CodeRunner":
+        return (
+          <CodeRunner
+            editorRef={editorRef}
+            language={language}
+            showRunPopup={showRunPopup}
+            setShowRunPopup={setShowRunPopup}
+          />
+        );
+      case "Code Assisstant":
+        return <CodeAssisstant />;
+      case "Explain Code":
+        return <CodeExplain />;
+      case "Related Programs":
+        return <RelatedPrograms />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col w-full mt-2 relative">
+      <ActionButtons
+        activeComponent={activeComponent}
+        setActiveComponent={setActiveComponent}
+        onRunClick={handleRunClick}
+        onShowInfo={() => setShowInfo(true)}
+      />
+
+      <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-2">
+        {renderComponent()}
+      </div>
+
+      {/* Info Popup */}
+      {showInfo && (
+        <div
+          className="absolute top-[60px] right-3 w-96 bg-[#1a1a1a] rounded-lg shadow-lg p-4 text-white z-20"
+          style={{ border: "1px solid #facc15" }}
+        >
+          <h3 className="text-xl font-bold text-yellow-400 mb-3 text-center">
+            Feature Information
+          </h3>
+          <ul className="space-y-3 text-gray-300 text-sm">
+            <li>
+              <span className="font-semibold text-green-400">Run Code:</span> Executes your written code and shows real-time output.
+            </li>
+            <li>
+              <span className="font-semibold text-blue-400">Code Assistant:</span> AI helper for debugging, optimizing, or generating code.
+            </li>
+            <li>
+              <span className="font-semibold text-purple-400">Explain Code:</span> Explains your code logic and structure.
+            </li>
+            <li>
+              <span className="font-semibold text-gray-400">Related Programs:</span> Shows relevant code examples.
+            </li>
+          </ul>
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => setShowInfo(false)}
+              style={{ border: "1px solid #facc15" }}
+              className="px-4 py-2 rounded-md bg-yellow-600 text-black font-semibold hover:bg-yellow-500 transition-all"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ActionView;
