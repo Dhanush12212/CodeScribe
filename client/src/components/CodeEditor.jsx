@@ -1,7 +1,7 @@
 import { Editor } from '@monaco-editor/react';
 import React, { useState, useRef, useEffect } from 'react';
 import LanguageSelector from './LanguageSelector';
-import { CODE_SNIPPETS, LANGUAGE_IDS } from '../constants'; 
+import { CODE_SNIPPETS, LANGUAGE_IDS } from '../constants';
 import { socket } from '../socket/socket';
 import { ChevronDown } from 'lucide-react';
 import ActionView from '../pages/ActionView';
@@ -27,16 +27,17 @@ function CodeEditor({ roomId }) {
     socket.connect();
     socket.emit('joinRoom', roomId);
 
-    socket.on('languageChange', ({ roomId: updatedRoomId, language: newLang }) => {
+    socket.on('languageChange', ({ roomId: updatedRoomId, language }) => {
       if (updatedRoomId === roomId) {
-        setLanguage(newLang);
-        setLanguageId(LANGUAGE_IDS[newLang]);
-        setValue(CODE_SNIPPETS[newLang]);
+        setLanguage(language);
+        setValue(CODE_SNIPPETS[language]);
+        console.log(`Language updated in room ${roomId}: ${language}`);
       }
     });
 
     socket.on('updatedCode', ({ roomId: updatedRoomId, code }) => {
       if (updatedRoomId === roomId && code !== value) {
+        console.log(`Code updated in room ${roomId}: ${code.length} chars`);
         setValue(code);
       }
     });
@@ -45,12 +46,13 @@ function CodeEditor({ roomId }) {
       socket.off('languageChange');
       socket.off('updatedCode');
     };
-  }, [roomId, value]);
+  }, [roomId]); 
 
   const onSelectLanguage = (selectedLanguage, id) => {
     setLanguage(selectedLanguage);
     setLanguageId(id);
     setValue(CODE_SNIPPETS[selectedLanguage]);
+
     socket.emit('languageChange', { roomId, selectedLanguage });
   };
 
@@ -60,16 +62,20 @@ function CodeEditor({ roomId }) {
   };
 
   const handleOnChange = (newCode) => {
-    newCode.preventDefault();
     setValue(newCode);
-    socket.emit('updatedCode', { roomId, code: newCode });
+    socket.emit('updatedCode', { roomId, newCode });
   };
 
-  const onMount = (editor) => { editorRef.current = editor; editor.focus(); };
+  const onMount = (editor) => {
+    editorRef.current = editor;
+    editor.focus();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (themeRef.current && !themeRef.current.contains(event.target)) setThemeOpen(false);
+      if (themeRef.current && !themeRef.current.contains(event.target)) {
+        setThemeOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -100,8 +106,16 @@ function CodeEditor({ roomId }) {
             )}
           </div>
         </div>
-        <Editor options={{ minimap: { enabled: false } }} height="100%" theme={theme} language={language}
-          value={value} onMount={onMount} onChange={handleOnChange} />
+
+        <Editor
+          options={{ minimap: { enabled: false } }}
+          height="100%"
+          theme={theme}
+          language={language}
+          value={value}
+          onMount={onMount}
+          onChange={handleOnChange}
+        />
       </div>
 
       <div className="w-full custom-xl:w-1/2 h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
@@ -123,3 +137,5 @@ function CodeEditor({ roomId }) {
 }
 
 export default CodeEditor;
+
+ 
