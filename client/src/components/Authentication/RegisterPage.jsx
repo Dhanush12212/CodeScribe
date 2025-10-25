@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"; 
 import axios from "axios";
 import { MdOutlineMail, MdOutlinePassword } from "react-icons/md";  
-import { FaRegEye, FaRegEyeSlash, FaUser } from "react-icons/fa"; 
-import { SiJavascript, SiReact, SiHtml5, SiCss3 } from "react-icons/si";
+import { FaRegEye, FaRegEyeSlash, FaUser, FaPython, FaJava } from "react-icons/fa"; 
+import { SiJavascript, SiReact, SiHtml5, SiCss3, SiCplusplus } from "react-icons/si";
 import { API_URL, clientID } from "../../../config"; 
 import GoogleAuth from './GoogleAuth';
 
@@ -38,7 +38,7 @@ function RegisterPage({ register }) {
     }
   };
 
-  const codeIcons = [<SiJavascript key="js" />, <SiReact key="react" />, <SiHtml5 key="html" />, <SiCss3 key="css" />];
+  const codeIcons = [<SiJavascript key="js" />, <SiReact key="react" />, <SiHtml5 key="html" />, <SiCss3 key="css"/>, <FaPython key="python"/>, <SiCplusplus  key="c++"/>, <FaJava key="java"/>  ];
 
   return (
     <div className="relative w-full h-screen flex items-center justify-center overflow-hidden">

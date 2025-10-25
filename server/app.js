@@ -8,10 +8,12 @@ import connectDB from './db/connectDB.js';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io'; 
+import CodeRunnerRoute from './routes/codeRunner.route.js'
 
 const app = express();
-const PORT = process.env.PORT || 8000;
-
+// const PORT = process.env.PORT || 8000;
+const PORT = 8000;
+ 
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
     cors: {
@@ -29,6 +31,7 @@ app.use(cors({
 
 
 app.use('/api/v1/auth', AuthRoute); 
+app.use('/api/v1/execute', CodeRunnerRoute); 
  
 const rooms = new Map(); 
 

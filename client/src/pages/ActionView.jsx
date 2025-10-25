@@ -7,7 +7,7 @@ import RelatedPrograms from "../components/Actions/RelatedPrograms";
 import ActionButtons from "../components/Actions/ActionButtons";
 
 const ActionView = ({ editorRef, language }) => {
-  const [activeComponent, setActiveComponent] = useState("CodeRunner");
+  const [activeComponent, setActiveComponent] = useState("Code Assisstant"); 
   const [showInfo, setShowInfo] = useState(false);
   const [showRunPopup, setShowRunPopup] = useState(false);
 

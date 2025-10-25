@@ -44,7 +44,7 @@ const CodeRunner = ({ editorRef, language, showRunPopup, setShowRunPopup }) => {
       <div
         className="rounded-md h-[85vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-3 text-gray-200"
         style={{
-          border: `1px solid ${isError ? "#ef4444" : "#333"}`, // red-500 : custom dark gray
+          border: `1px solid ${isError ? "#ef4444" : "#333"}`,
           backgroundColor: "#0f0f0f",
           transition: "border-color 0.3s ease",
         }}
