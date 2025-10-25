@@ -1,13 +1,13 @@
-// src/components/ActionPanel/ActionView.jsx
 import React, { useState } from "react";
-import CodeRunner from "../components/Actions/CodeRunner"
+import CodeRunner from "../components/Actions/CodeRunner";
 import CodeAssisstant from "../components/Actions/CodeAssisstant";
 import CodeExplain from "../components/Actions/CodeExplain";
 import RelatedPrograms from "../components/Actions/RelatedPrograms";
 import ActionButtons from "../components/Actions/ActionButtons";
-
+import { LANGUAGE_IDS } from '../constants'; 
+ 
 const ActionView = ({ editorRef, language }) => {
-  const [activeComponent, setActiveComponent] = useState("Code Assisstant"); 
+  const [activeComponent, setActiveComponent] = useState("Code Assisstant");
   const [showInfo, setShowInfo] = useState(false);
   const [showRunPopup, setShowRunPopup] = useState(false);
 
@@ -15,6 +15,8 @@ const ActionView = ({ editorRef, language }) => {
     setActiveComponent("CodeRunner");
     setShowRunPopup(true);
   };
+ 
+  const languageId = LANGUAGE_IDS[language];  
 
   const renderComponent = () => {
     switch (activeComponent) {
@@ -22,17 +24,21 @@ const ActionView = ({ editorRef, language }) => {
         return (
           <CodeRunner
             editorRef={editorRef}
-            language={language}
+            languageId={languageId}  
             showRunPopup={showRunPopup}
             setShowRunPopup={setShowRunPopup}
           />
         );
+
       case "Code Assisstant":
         return <CodeAssisstant />;
+
       case "Explain Code":
         return <CodeExplain />;
+
       case "Related Programs":
         return <RelatedPrograms />;
+
       default:
         return null;
     }
@@ -51,7 +57,6 @@ const ActionView = ({ editorRef, language }) => {
         {renderComponent()}
       </div>
 
-      {/* Info Popup */}
       {showInfo && (
         <div
           className="absolute top-[60px] right-3 w-96 bg-[#1a1a1a] rounded-lg shadow-lg p-4 text-white z-20"
@@ -62,16 +67,20 @@ const ActionView = ({ editorRef, language }) => {
           </h3>
           <ul className="space-y-3 text-gray-300 text-sm">
             <li>
-              <span className="font-semibold text-green-400">Run Code:</span> Executes your written code and shows real-time output.
+              <span className="font-semibold text-green-400">Run Code:</span>
+              Executes your code with real-time output.
             </li>
             <li>
-              <span className="font-semibold text-blue-400">Code Assistant:</span> AI helper for debugging, optimizing, or generating code.
+              <span className="font-semibold text-blue-400">Code Assistant:</span>
+              Debug, optimize or generate code.
             </li>
             <li>
-              <span className="font-semibold text-purple-400">Explain Code:</span> Explains your code logic and structure.
+              <span className="font-semibold text-purple-400">Explain Code:</span>
+              Explains logic step-by-step.
             </li>
             <li>
-              <span className="font-semibold text-gray-400">Related Programs:</span> Shows relevant code examples.
+              <span className="font-semibold text-gray-400">Related Programs:</span>
+              Shows useful examples.
             </li>
           </ul>
           <div className="flex justify-center mt-4">

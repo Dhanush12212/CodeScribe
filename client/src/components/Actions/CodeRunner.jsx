@@ -1,26 +1,70 @@
 import { useState } from "react";
-import { executeCode } from "../../api";
+import axios from "axios";
 import InputPopup from "../InputPopup";
+import { API_URL } from "../../../config";
 
-const CodeRunner = ({ editorRef, language, showRunPopup, setShowRunPopup }) => {
+const POLL_INTERVAL = 2500; 
+
+const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) => {
   const [output, setOutput] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isError, setIsError] = useState(false);
 
+  // Polling function to get the result
+  const pollResult = async (token) => {
+    try {
+      const res = await axios.get(`${API_URL}/execute/result/${token}`);
+      const data = res.data;
+
+      if (data.status.id >= 3) { // Finished
+        return data;
+      } else {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+        return await pollResult(token);
+      }
+    } catch (err) {
+      console.error("Error polling result:", err);
+      throw err;
+    }
+  };
+
+  // Run code
   const runCode = async (userInput) => {
+    if (!editorRef.current) return;
     const sourceCode = editorRef.current.getValue();
     if (!sourceCode) return;
 
     try {
       setIsLoading(true);
       setInputValue(userInput);
-      const { run: result } = await executeCode(language, sourceCode, userInput);
-      setOutput(result.output.split("\n"));
-      setIsError(!!result.stderr);
+
+      const runResponse = await axios.post(`${API_URL}/execute/runCode`, {
+        source_code: sourceCode,
+        language_id: languageId,  
+        stdin: userInput,
+      });
+
+      const token = runResponse.data.token;
+      if (!token) throw new Error("Failed to get submission token");
+
+      const result = await pollResult(token);
+
+      if (result.compile_output) {
+        setOutput(result.compile_output.split("\n"));
+        setIsError(true);
+      } else if (result.stderr) {
+        setOutput(result.stderr.split("\n"));
+        setIsError(true);
+      } else {
+        setOutput(result.stdout ? result.stdout.split("\n") : []);
+        setIsError(false);
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || "Unable to run code");
+      setOutput([]);
+      setIsError(true);
     } finally {
       setIsLoading(false);
       setShowRunPopup(false);
@@ -30,7 +74,7 @@ const CodeRunner = ({ editorRef, language, showRunPopup, setShowRunPopup }) => {
 
   return (
     <div className="relative w-full h-full">
-      {/* Inline Popup */}
+      {/* Input Popup */}
       {showRunPopup && (
         <InputPopup
           inputValue={inputValue}

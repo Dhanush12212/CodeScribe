@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE = process.env.JUDGE0_BASE_URL || 'https://ce.judge0.com';
+const BASE = 'https://ce.judge0.com';
 const API_KEY = process.env.JUDGE0_API_KEY || '';  
 
 function judge0Headers() {

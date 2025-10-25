@@ -6,6 +6,15 @@ export const LANGUAGE_VERSIONS = {
   csharp: "6.12.0", 
   php: "8.2.3", 
 };
+
+export const LANGUAGE_IDS = {
+  javascript: 63,
+  typescript: 74,
+  python: 71,
+  java: 62,
+  csharp: 51,
+  php: 68,
+};
   
   export const CODE_SNIPPETS = {
     javascript: `\nfunction greet(name) {\n\tconsole.log("Start with " + name + "!");\n}\n\ngreet("JavaScript");\n`,
