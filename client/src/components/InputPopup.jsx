@@ -16,8 +16,7 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
   };
 
   return (
-    <div className="absolute inset-0 z-20 flex justify-center items-center">
-      {/* Overlay */}
+    <div className="absolute inset-0 z-20 flex justify-center items-center"> 
       <div className="absolute inset-0 bg-black/40 rounded-md"></div>
 
       {/* Popup content */}

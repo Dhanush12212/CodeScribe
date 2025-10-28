@@ -10,14 +10,14 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isError, setIsError] = useState(false);
+  const [executionTime, setExecutionTime] = useState(null)
 
-  // Polling function to get the result
   const pollResult = async (token) => {
     try {
       const res = await axios.get(`${API_URL}/execute/result/${token}`);
-      const data = res.data;
-
-      if (data.status.id >= 3) { // Finished
+      const data = res.data; 
+      
+      if (data.status.id >= 3) {  
         return data;
       } else {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL));
@@ -28,27 +28,28 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
       throw err;
     }
   };
-
+  
   // Run code
   const runCode = async (userInput) => {
     if (!editorRef.current) return;
     const sourceCode = editorRef.current.getValue();
     if (!sourceCode) return;
-
+    
     try {
       setIsLoading(true);
       setInputValue(userInput);
-
+      
       const runResponse = await axios.post(`${API_URL}/execute/runCode`, {
         source_code: sourceCode,
         language_id: languageId,  
         stdin: userInput,
-      });
-
+      }); 
+      
       const token = runResponse.data.token;
       if (!token) throw new Error("Failed to get submission token");
-
+      
       const result = await pollResult(token);
+      setExecutionTime(result.time);
 
       if (result.compile_output) {
         setOutput(result.compile_output.split("\n"));
@@ -94,6 +95,12 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
         }}
       >
         <p className="mb-3 text-xl text-gray-500 text-center font-bold">Output</p>
+
+        {executionTime && (
+          <span className="flex justify-end text-gray-400 mb-2">
+            Execution time: {executionTime}s
+          </span>
+        )}
 
         {isLoading ? (
           <p className="text-center text-gray-400">Running...</p>

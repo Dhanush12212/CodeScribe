@@ -5,7 +5,7 @@ const rooms = new Map();
 export default function initSocket(httpServer) {
     const io = new Server(httpServer, {
         cors: {
-            origin: ['http://localhost:5173', 'https://code-mesh.vercel.app'],
+            origin: ['http://localhost:5173'],
             credentials: true,
         }
     });

@@ -37,12 +37,10 @@ function Login({ login }) {
   const codeIcons = [<SiJavascript key="js" />, <SiReact key="react" />, <SiHtml5 key="html" />, <SiCss3 key="css"/>, <FaPython key="python"/>, <SiCplusplus  key="c++"/>, <FaJava key="java"/>];
 
   return (
-    <div className="relative w-full h-screen flex items-center justify-center overflow-hidden">
-      {/* Gradient Background */}
+    <div className="relative w-full h-screen flex items-center justify-center overflow-hidden"> 
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 animate-gradient-bg"></div>
       <div className="absolute inset-0 bg-black/40"></div>
-
-      {/* Floating Code Icons */}
+ 
       <div className="absolute w-full h-full">
         {codeIcons.map((icon, i) => (
           <div

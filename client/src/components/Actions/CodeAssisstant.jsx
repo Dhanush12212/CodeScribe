@@ -9,14 +9,14 @@ function CodeAssisstant() {
     console.log("User asked:", query);
     setQuery('');
     if (textareaRef.current) {
-      textareaRef.current.style.height = "40px"; // reset height
+      textareaRef.current.style.height = "40px";
     }
   };
 
   const handleInput = (e) => {
     setQuery(e.target.value);
     if (textareaRef.current) {
-      textareaRef.current.style.height = "40px"; // reset to min height
+      textareaRef.current.style.height = "40px";
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
   };
@@ -40,8 +40,8 @@ function CodeAssisstant() {
       <div
         className="p-3 flex items-end gap-2 sticky bottom-0"
         style={{
-          backgroundColor: "#1f2937", // gray-800
-          borderTop: "1px solid #374151", // gray-700
+          backgroundColor: "#1f2937", 
+          borderTop: "1px solid #374151", 
         }}
       >
         <textarea
@@ -51,21 +51,21 @@ function CodeAssisstant() {
           placeholder="Type your question..."
           className="flex-1 outline-none text-white rounded-md p-3 resize-none overflow-hidden text-lg"
           style={{
-            backgroundColor: "#374151", // gray-700
-            border: "1px solid #4b5563", // gray-600
+            backgroundColor: "#374151", 
+            border: "1px solid #4b5563",
             transition: "border-color 0.3s ease",
           }}
-          onFocus={(e) => (e.target.style.borderColor = "#3b82f6")} // blue-500 on focus
-          onBlur={(e) => (e.target.style.borderColor = "#4b5563")} // revert to gray
+          onFocus={(e) => (e.target.style.borderColor = "#3b82f6")} 
+          onBlur={(e) => (e.target.style.borderColor = "#4b5563")} 
         />
         <button
           onClick={handleAsk}
           className="text-white px-5 py-3 rounded-md flex-shrink-0 mb-1 transition-all duration-200 shadow-md"
           style={{
-            backgroundColor: "#2563eb", // blue-600
+            backgroundColor: "#2563eb", 
             border: "1px solid #2563eb",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")} // blue-700
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
         >
           Ask

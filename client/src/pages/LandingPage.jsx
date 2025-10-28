@@ -160,11 +160,11 @@ export default function LandingPage() {
             </div>
 
             <TypingCodeHero
-              code={`// Live collaboration with AI
-function CodeTogether() {
-  const [code, setCode] = useState("");
-  return <Editor code={code} onChange={setCode} />;
-}`}
+              code={`/// Live collaboration with AI
+    function CodeTogether() {
+      const [code, setCode] = useState("");
+      return <Editor code={code} onChange={setCode} />;
+    }`}
             />
           </div>
         </motion.div>
