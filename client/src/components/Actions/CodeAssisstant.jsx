@@ -1,12 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Loader2 } from 'lucide-react'; // ✅ Spinner icon
 
 function CodeAssisstant() {
   const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false); // ✅ loading state
   const textareaRef = useRef(null);
 
-  const handleAsk = () => {
+  const handleAsk = async () => {
     if (!query.trim()) return;
     console.log("User asked:", query);
+    setLoading(true);
+
+    // Simulate processing time (replace this with actual async logic later)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    setLoading(false);
     setQuery('');
     if (textareaRef.current) {
       textareaRef.current.style.height = "40px";
@@ -60,15 +68,23 @@ function CodeAssisstant() {
         />
         <button
           onClick={handleAsk}
-          className="text-white px-5 py-3 rounded-md flex-shrink-0 mb-1 transition-all duration-200 shadow-md"
+          disabled={loading}
+          className={`text-white px-5 py-3 rounded-md flex items-center justify-center gap-2 flex-shrink-0 mb-1 transition-all duration-200 shadow-md ${
+            loading ? 'opacity-80 cursor-not-allowed' : ''
+          }`}
           style={{
             backgroundColor: "#2563eb", 
             border: "1px solid #2563eb",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+          onMouseEnter={(e) => {
+            if (!loading) e.currentTarget.style.backgroundColor = "#1d4ed8";
+          }}
+          onMouseLeave={(e) => {
+            if (!loading) e.currentTarget.style.backgroundColor = "#2563eb";
+          }}
         >
-          Ask
+          {loading && <Loader2 className="animate-spin h-5 w-5" />} 
+          {loading ? 'Processing...' : 'Ask'}
         </button>
       </div>
     </div>

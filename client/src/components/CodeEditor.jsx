@@ -52,7 +52,6 @@ function CodeEditor({ roomId }) {
     setLanguage(selectedLanguage);
     setLanguageId(id);
     setValue(CODE_SNIPPETS[selectedLanguage]);
-
     socket.emit('languageChange', { roomId, selectedLanguage });
   };
 
@@ -86,6 +85,7 @@ function CodeEditor({ roomId }) {
       <div className="w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         <div className="flex gap-4 mb-2 items-center p-2">
           <LanguageSelector language={language} onSelect={onSelectLanguage} />
+
           <div ref={themeRef} className="relative inline-block text-left">
             <button onClick={() => setThemeOpen(!themeOpen)}
               className="inline-flex justify-between items-center px-4 py-2 w-44 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700 focus:outline-none">
@@ -104,7 +104,11 @@ function CodeEditor({ roomId }) {
                 ))}
               </ul>
             )}
-          </div>
+          </div> 
+ 
+          <button className='ml-auto text-white bg-gray-800 px-4 py-2 rounded-md hover:bg-gray-700 transition'>
+            Debug
+          </button>
         </div>
 
         <Editor
@@ -137,5 +141,3 @@ function CodeEditor({ roomId }) {
 }
 
 export default CodeEditor;
-
- 

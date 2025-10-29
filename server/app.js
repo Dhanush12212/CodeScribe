@@ -10,6 +10,7 @@ import AuthRoute from './routes/auth.routes.js';
 import CodeRunnerRoute from './routes/codeRunner.route.js';
 import connectDB from './db/connectDB.js'; 
 import initSocket from './socket/socket.js';
+import { codeAssistant } from './controller/codeAssistant.controller.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -29,6 +30,7 @@ app.use(cors({
 // Routes
 app.use('/api/v1/auth', AuthRoute);
 app.use('/api/v1/execute', CodeRunnerRoute);
+app.use('/api/v1/codeAssistant', codeAssistant);
 
 // Start Server
 const startServer = async () => {
