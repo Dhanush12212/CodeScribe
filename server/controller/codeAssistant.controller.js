@@ -18,8 +18,7 @@ const codeAssistant = async (req, res) => {
       prompt,
       stream: false,
     });
-
-    // axios automatically parses JSON
+ 
     res.json({ result: response.data.response });
   } catch (err) {
     console.error("Error calling Ollama:", err.message);
