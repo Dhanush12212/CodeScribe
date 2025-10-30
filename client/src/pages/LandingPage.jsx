@@ -259,9 +259,13 @@ export default function LandingPage() {
             "Node.js",
             "Express.js",
             "MongoDB",
-            "Socket.IO",
-            "OpenAI API",
+            "Socket.io",
+            "Google Auth",
+            "Framer-Motion",
             "Tailwind CSS",
+            "Judge0 API",
+            "Ollama",
+            "Deepseek-coder",
           ].map((tech) => (
             <motion.div
               key={tech}
