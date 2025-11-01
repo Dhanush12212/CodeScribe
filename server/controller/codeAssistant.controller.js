@@ -7,52 +7,57 @@ const MISTRAL_API_URL = process.env.MISTRAL_API_URL;
 export const AskAI = async (req, res) => {
   try {
     const { prompt } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: "Prompt is required." });
-    }
+    if (!prompt) return res.status(400).json({ error: "Prompt is required." });
+
+    // Set response headers for streaming
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
     const requestBody = {
-      model: "mistral:instruct",
+      model: "mistral:latest",
       prompt: `
-        You are a professional coding assistant.
-        Return strictly in JSON format as:
-        {
-          "explanation": "Explain the concept",
-          "code": "Write clean code"
-        }
+You are a professional coding assistant.
+Return strictly in JSON format as:
+{
+  "explanation": "Explain the concept",
+  "code": "Write clean code"
+}
 
-          If the prompt requests Java code, ALWAYS:
-  - Use the class name "Main".
-  - Include the standard Java entry point:
-    public static void main(String args[])
+If the prompt requests Java code:
+- Use class name "Main"
+- Include public static void main(String args[])
 
-        Prompt: ${prompt}
-        `,
-      stream: false
-    }; 
-    const response = await axios.post(MISTRAL_API_URL, requestBody); 
+Prompt: ${prompt}`,
+      stream: true,
+    };
 
-    const rawOutput = response.data.response?.trim() || response.data.output?.trim();
+    const response = await axios.post(MISTRAL_API_URL, requestBody, {
+      responseType: "stream",
+    });
 
-    if (!rawOutput) {
-      return res.status(500).json({ error: "No valid response field from model." });
-    }
+    response.data.on("data", (chunk) => {
+      const text = chunk.toString();
+      if (text.includes("[DONE]")) {
+        res.write("event: done\ndata: [DONE]\n\n");
+        res.end();
+      } else {
+        res.write(`data: ${JSON.stringify({ token: text })}\n\n`);
+      }
+    });
 
-    const cleanedOutput = rawOutput.replace(/```json|```/g, "").trim();
+    response.data.on("end", () => {
+      res.write("event: done\ndata: [DONE]\n\n");
+      res.end();
+    });
 
-    let output;
-    try {
-      output = JSON.parse(cleanedOutput);
-    } catch (err) { 
-      output = {
-        explanation: "Unable to parse structured JSON output. Here's the raw response:",
-        code: rawOutput
-      };
-    }
-
-    return res.status(200).json(output);
-
-  } catch (error) {
-    return res.status(500).json({ error: "Internal server error." });
+    response.data.on("error", (err) => {
+      console.error("Stream error:", err.message);
+      res.end();
+    });
+  } catch (err) {
+    console.error("❌ Error in AskAI controller:", err.message);
+    if (!res.headersSent)
+      res.status(500).json({ error: "Internal server error." });
   }
 };
