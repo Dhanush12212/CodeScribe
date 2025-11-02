@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy } from "lucide-react";
 import { API_URL } from "../../../config";
 
 function CodeAssistant() {
@@ -8,15 +8,13 @@ function CodeAssistant() {
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef(null);
   const scrollRef = useRef(null);
-
-  // 🌀 Auto-scroll
+ 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [responses]);
-
-  // 🚀 Ask AI
+ 
   const handleAsk = async () => {
     if (!query.trim()) return;
 
@@ -35,22 +33,44 @@ function CodeAssistant() {
       const data = await res.json();
       const explanation = (data.explanation || "").trim();
       const code = (data.code || "").trim();
-
+ 
       setResponses((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          explanation,
-          code,
-        },
+        { role: "assistant", explanation: "", code: "" },
       ]);
+ 
+      const words = explanation.split(" ");
+      let currentText = "";
+      let index = 0;
+
+      const stream = setInterval(() => {
+        if (index < words.length) {
+          currentText += (index > 0 ? " " : "") + words[index];
+          setResponses((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1].explanation = currentText;
+            return updated;
+          });
+          index++;
+        } else {
+          clearInterval(stream); 
+          setTimeout(() => {
+            setResponses((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1].code = code;
+              return updated;
+            });
+          }, 300);
+        }
+      }, 40); 
+
     } catch (error) {
-      console.error("❌ Error fetching AI response:", error);
+      console.error("Error fetching AI response:", error);
       setResponses((prev) => [
         ...prev,
         {
           role: "assistant",
-          explanation: "⚠️ Something went wrong. Please try again.",
+          explanation: "Something went wrong. Please try again.",
           code: "",
         },
       ]);
@@ -58,8 +78,7 @@ function CodeAssistant() {
       setLoading(false);
     }
   };
-
-  // 🧾 Auto-resize textarea
+ 
   const handleInput = (e) => {
     setQuery(e.target.value);
     if (textareaRef.current) {
@@ -75,6 +94,10 @@ function CodeAssistant() {
       handleAsk();
     }
   };
+ 
+  const copyCode = (text) => {
+    navigator.clipboard.writeText(text);
+  };
 
   return (
     <div
@@ -85,7 +108,6 @@ function CodeAssistant() {
         overflowX: "hidden",
       }}
     >
-      {/* 💬 Chat Section */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-4 flex flex-col items-center space-y-5 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
@@ -98,51 +120,46 @@ function CodeAssistant() {
                 msg.role === "user" ? "justify-end" : "justify-start"
               }`}
             >
-              <div
-                className={`max-w-2xl w-full rounded-2xl p-4 text-sm leading-relaxed shadow-md flex flex-col space-y-3 ${
-                  msg.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-800 text-gray-100"
-                }`}
-              > 
+            <div
+              className={`${
+                msg.role === "user"
+                  ? "bg-blue-600 text-white ml-auto max-w-md"  
+                  : "bg-gray-800 text-gray-100 max-w-2xl"
+              } rounded-2xl p-4 text-sm leading-relaxed shadow-md flex flex-col space-y-4 transition-all duration-300`}
+            >
+            
                 {msg.role === "user" && (
                   <p className="whitespace-pre-wrap text-base font-medium">
                     {msg.content}
                   </p>
                 )}
- 
+
                 {msg.role === "assistant" && (
-                  <div className="flex flex-col space-y-3">
-                    {/* 🧠 Explanation */}
+                  <div className="flex flex-col space-y-4">
                     {msg.explanation && (
-                      <div className="bg-gray-900 p-4 rounded-xl border border-gray-700 shadow-inner">
-                        <p className="text-yellow-400 font-semibold mb-2">
+                      <div className="bg-gray-900 p-4 rounded-xl border border-gray-700 shadow-inner animate-fade-in">
+                        <h3 className="text-yellow-400 font-semibold mb-2">
                           🧠 Explanation
-                        </p>
-                        <p className="text-gray-300 whitespace-pre-wrap text-sm tracking-wide leading-relaxed text-justify break-words">
-                          {msg.explanation
-                            .replace(/[{}"]/g, " ")
-                            .replace(/\s{2,}/g, " ")
-                            .replace(/([a-z])([A-Z])/g, "$1 $2")}
+                        </h3>
+                        <p className="text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">
+                          {msg.explanation}
                         </p>
                       </div>
                     )}
-
-                    {/* 💻 Code */}
+ 
                     {msg.code && (
-                      <div className="bg-[#0d1117] p-4 rounded-xl border border-gray-700 shadow-inner overflow-x-auto">
-                        <p className="text-blue-400 font-semibold mb-2">
-                          💻 Code
-                        </p>
-                        <pre
-                          className="text-green-400 text-sm whitespace-pre-wrap font-mono leading-6"
-                          style={{
-                            backgroundColor: "#0d1117",
-                            borderRadius: "8px",
-                            padding: "8px",
-                            overflowX: "auto",
-                          }}
-                        >
+                      <div className="bg-[#0d1117] p-4 rounded-xl border border-gray-700 shadow-inner overflow-x-auto relative animate-fade-in">
+                        <h3 className="text-blue-400 font-semibold mb-2 flex items-center justify-between">
+                          <span>💻 Code</span>
+                          <button
+                            onClick={() => copyCode(msg.code)}
+                            className="text-gray-400 hover:text-gray-200 transition"
+                            title="Copy code"
+                          >
+                            <Copy size={16} />
+                          </button>
+                        </h3>
+                        <pre className="text-green-400 text-sm whitespace-pre font-mono leading-6">
                           <code>{msg.code}</code>
                         </pre>
                       </div>
@@ -154,22 +171,20 @@ function CodeAssistant() {
           ))
         ) : (
           <p className="text-gray-500 text-center mt-5">
-            Ask something to generate or debug code...
+            Ask something to generate or explain code...
           </p>
         )}
-
-        {/* ⏳ Loading bubble */}
+ 
         {loading && (
           <div className="flex justify-center">
-            <div className="bg-gray-800 text-gray-300 px-3 py-2 rounded-2xl flex items-center gap-2">
+            <div className="bg-gray-800 text-gray-300 px-3 py-2 rounded-2xl flex items-center gap-2 animate-pulse">
               <Loader2 className="animate-spin h-4 w-4" />
               <span>Generating...</span>
             </div>
           </div>
         )}
       </div>
-
-      {/* 📝 Input Section */}
+ 
       <div
         className="p-3 flex items-end gap-2 sticky bottom-0"
         style={{ backgroundColor: "#1f2937", borderTop: "1px solid #374151" }}
@@ -190,8 +205,8 @@ function CodeAssistant() {
         <button
           onClick={handleAsk}
           disabled={loading}
-          className={`text-white px-5 py-2.5 rounded-md flex items-center justify-center gap-2 mb-1 shadow-md ${
-            loading ? "opacity-80 cursor-not-allowed" : ""
+          className={`text-white px-5 py-2.5 rounded-md flex items-center justify-center gap-2 mb-1 shadow-md transition-all duration-200 ${
+            loading ? "opacity-80 cursor-not-allowed" : "hover:bg-blue-700"
           }`}
           style={{ backgroundColor: "#2563eb" }}
         >
