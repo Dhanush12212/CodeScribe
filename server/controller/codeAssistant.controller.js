@@ -2,61 +2,85 @@ import fetch from "node-fetch";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const MISTRAL_API_URL = process.env.MISTRAL_API_URL;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_URL = process.env.GEMINI_API_URL;
 
 export const AskAI = async (req, res) => {
   try {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: "Prompt is required." });
-
+ 
     const body = {
-      model: "mistral:instruct",
-      prompt: `
-        You are a coding assistant.
-        Reply in this strict JSON format:
+      contents: [
         {
-          "explanation": "Short and clear explanation only",
-          "code": "Clean formatted code"
-        }
+          role: "user",
+          parts: [
+            {
+              text: `
+                You are a concise coding assistant.
+                Respond strictly in JSON format:
+                {
+                  "explanation": "Short and clear explanation",
+                  "code": "Clean and formatted code"
+                }
 
-        If Java is requested:
-        - Use class name Main
-        - Include public static void main(String[] args)
+                If Java is requested:
+                - Use class name Main
+                - Include public static void main(String[] args)
 
-        Prompt: ${prompt}
-      `,
-      stream: false,
+                Prompt: ${prompt}
+              `,
+            },
+          ],
+        },
+      ],
     };
 
-    const response = await fetch(MISTRAL_API_URL, {
+    
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      return res.status(500).json({ error: "Failed to reach Mistral API." });
+      const errorText = await response.text();
+      console.error("Gemini API Error:", errorText);
+      return res.status(500).json({
+        error: "Failed to reach Gemini API.",
+        details: errorText,
+      });
     }
 
     const data = await response.json();
-    const rawText = data?.response || "";
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
     let explanation = "";
     let code = "";
 
-    try {
+    try { 
       const parsed = JSON.parse(rawText);
       explanation = parsed.explanation || "";
       code = parsed.code || "";
-    } catch {
-      const codeMatch = rawText.match(/```[a-z]*([\s\S]*?)```/i);
-      code = codeMatch ? codeMatch[1].trim() : "";
-      explanation = rawText.replace(/```[\s\S]*?```/, "").trim();
-    }
+    } catch { 
+      const explanationMatch = rawText.match(/"explanation"\s*:\s*"([^"]+)"/);
+      const codeMatch = rawText.match(/"code"\s*:\s*"([\s\S]+)"/);
 
-    res.status(200).json({ explanation, code });
+      explanation = explanationMatch ? explanationMatch[1] : "";
+      code = codeMatch ? codeMatch[1] : "";
+ 
+      if (!code) {
+        const codeBlock = rawText.match(/```[a-z]*([\s\S]*?)```/i);
+        code = codeBlock ? codeBlock[1].trim() : "";
+      }
+    }
+ 
+    explanation = explanation.replace(/\\"/g, '"').trim();
+    code = code.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim();
+ 
+    return res.status(200).json({ explanation, code });
   } catch (error) {
     console.error("❌ AskAI Error:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
