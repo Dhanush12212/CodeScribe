@@ -147,23 +147,67 @@ function CodeAssistant() {
                       </div>
                     )}
  
-                    {msg.code && (
-                      <div className="bg-[#0d1117] p-4 rounded-xl border border-gray-700 shadow-inner overflow-x-auto relative animate-fade-in">
-                        <h3 className="text-blue-400 font-semibold mb-2 flex items-center justify-between">
-                          <span>💻 Code</span>
+                  {msg.code && (
+                    <div className="bg-[#0d1117] p-4 rounded-xl border border-gray-700 shadow-inner overflow-x-auto relative animate-fade-in">
+                      <h3 className="text-blue-400 font-semibold mb-2 flex items-center justify-between">
+                        <span>💻 Code</span>
+                  
+                        <div className="flex items-center gap-3">
                           <button
-                            onClick={() => copyCode(msg.code)}
-                            className="text-gray-400 hover:text-gray-200 transition"
+                            onClick={() => {
+                              setResponses((prev) => {
+                                const updated = [...prev];
+                                const item = updated[i];
+                                item.applied = !item.applied;
+                                return updated;
+                              });
+                            }}
+                            className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                              msg.applied
+                                ? "bg-green-700 text-white cursor-default"
+                                : "bg-blue-700 hover:bg-blue-600 text-white"
+                            }`}
+                          >
+                            {msg.applied ? "Applied" : "Apply"}
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              copyCode(msg.code);
+                              setResponses((prev) => {
+                                const updated = [...prev];
+                                const item = updated[i];
+                                item.copied = true;
+                                return updated;
+                              });
+                              setTimeout(() => {
+                                setResponses((prev) => {
+                                  const updated = [...prev];
+                                  const item = updated[i];
+                                  item.copied = false;
+                                  return updated;
+                                });
+                              }, 1500);
+                            }}
+                            className="text-gray-400 hover:text-gray-200 transition relative"
                             title="Copy code"
                           >
                             <Copy size={16} />
+                            {msg.copied && (
+                              <span className="absolute -top-[-26] right-0 text-xs bg-gray-800 text-green-400 px-2 py-1 rounded">
+                                Copied
+                              </span>
+                            )}
                           </button>
-                        </h3>
-                        <pre className="text-green-400 text-sm whitespace-pre font-mono leading-6">
-                          <code>{msg.code}</code>
-                        </pre>
-                      </div>
-                    )}
+                        </div>
+                      </h3>
+                          
+                      <pre className="text-green-400 text-sm whitespace-pre font-mono leading-6">
+                        <code>{msg.code}</code>
+                      </pre>
+                    </div>
+                  )}
+
                   </div>
                 )}
               </div>

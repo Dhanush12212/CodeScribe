@@ -1,10 +1,12 @@
 import { Editor } from '@monaco-editor/react';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import LanguageSelector from './LanguageSelector';
 import { CODE_SNIPPETS, LANGUAGE_IDS } from '../constants';
 import { socket } from '../socket/socket';
 import { ChevronDown } from 'lucide-react';
 import ActionView from '../pages/ActionView';
+import axios from 'axios';
+import { API_URL } from "../../config";
 
 const THEMES = [
   { label: "Dark", value: "vs-dark" },
@@ -18,11 +20,39 @@ function CodeEditor({ roomId }) {
   const [language, setLanguage] = useState('javascript');
   const [languageId, setLanguageId] = useState(LANGUAGE_IDS['javascript']);
   const [theme, setTheme] = useState('vs-dark');
-  const [value, setValue] = useState(CODE_SNIPPETS['javascript']);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [isDebugging, setIsDebugging] = useState(false);
   const editorRef = useRef(null);
   const themeRef = useRef(null);
+  const senderId = useRef(Date.now() + Math.random());  
+ 
+  const handleDebug = async () => {
+    const currentCode = editorRef.current?.getValue();
 
+    if (!currentCode?.trim()) return alert("⚠️ No code to debug!");
+    setIsDebugging(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/codeAssistant/debug`, {
+        code: currentCode,
+        language,
+      });
+
+      const { debuggedCode } = response.data;
+
+      if (response.status === 200 && debuggedCode) {
+        editorRef.current.setValue(debuggedCode);
+      } else {
+        alert("⚠️ Debugging failed. No valid response from AI.");
+      }
+    } catch (error) {
+      console.error("❌ Error while debugging:", error);
+      alert("❌ Something went wrong while debugging. Please try again.");
+    } finally {
+      setIsDebugging(false);
+    }
+  };
+ 
   useEffect(() => {
     socket.connect();
     socket.emit('joinRoom', roomId);
@@ -30,15 +60,13 @@ function CodeEditor({ roomId }) {
     socket.on('languageChange', ({ roomId: updatedRoomId, language }) => {
       if (updatedRoomId === roomId) {
         setLanguage(language);
-        setValue(CODE_SNIPPETS[language]);
-        console.log(`Language updated in room ${roomId}: ${language}`);
+        editorRef.current?.setValue(CODE_SNIPPETS[language]);
       }
     });
 
-    socket.on('updatedCode', ({ roomId: updatedRoomId, code }) => {
-      if (updatedRoomId === roomId && code !== value) {
-        console.log(`Code updated in room ${roomId}: ${code.length} chars`);
-        setValue(code);
+    socket.on('updatedCode', ({ roomId: updatedRoomId, code, senderId: remoteId }) => {
+      if (updatedRoomId === roomId && remoteId !== senderId.current) {
+        editorRef.current?.setValue(code);
       }
     });
 
@@ -46,12 +74,19 @@ function CodeEditor({ roomId }) {
       socket.off('languageChange');
       socket.off('updatedCode');
     };
-  }, [roomId]); 
+  }, [roomId]);
+ 
+  const handleOnChange = useCallback(
+    (newCode) => {
+      socket.emit('updatedCode', { roomId, code: newCode, senderId: senderId.current });
+    },
+    [roomId]
+  );
 
   const onSelectLanguage = (selectedLanguage, id) => {
     setLanguage(selectedLanguage);
     setLanguageId(id);
-    setValue(CODE_SNIPPETS[selectedLanguage]);
+    editorRef.current?.setValue(CODE_SNIPPETS[selectedLanguage]);
     socket.emit('languageChange', { roomId, selectedLanguage });
   };
 
@@ -60,16 +95,12 @@ function CodeEditor({ roomId }) {
     setThemeOpen(false);
   };
 
-  const handleOnChange = (newCode) => {
-    setValue(newCode);
-    socket.emit('updatedCode', { roomId, newCode });
-  };
-
   const onMount = (editor) => {
     editorRef.current = editor;
     editor.focus();
+    editor.setValue(CODE_SNIPPETS[language]);  
   };
-
+ 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (themeRef.current && !themeRef.current.contains(event.target)) {
@@ -81,33 +112,50 @@ function CodeEditor({ roomId }) {
   }, []);
 
   return (
-    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300">
+    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300"> 
       <div className="w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         <div className="flex gap-4 mb-2 items-center p-2">
           <LanguageSelector language={language} onSelect={onSelectLanguage} />
 
           <div ref={themeRef} className="relative inline-block text-left">
-            <button onClick={() => setThemeOpen(!themeOpen)}
-              className="inline-flex justify-between items-center px-4 py-2 w-44 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700 focus:outline-none">
+            <button
+              onClick={() => setThemeOpen(!themeOpen)}
+              className="inline-flex justify-between items-center px-4 py-2 w-44 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700 focus:outline-none"
+            >
               {THEMES.find((t) => t.value === theme)?.label || 'Select Theme'}
-              <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`ml-2 h-4 w-4 transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`}
+              />
             </button>
             {themeOpen && (
               <ul className="absolute mt-2 w-44 rounded-md shadow-lg bg-gray-900 ring-1 ring-black ring-opacity-5 z-10 max-h-60 overflow-y-auto animate-fadeIn">
                 {THEMES.map((t) => (
-                  <li key={t.value} onClick={() => onSelectTheme(t.value)}
+                  <li
+                    key={t.value}
+                    onClick={() => onSelectTheme(t.value)}
                     className={`cursor-pointer px-2 py-2 text-sm md:text-base font-semibold transition-colors duration-150 ${
-                      theme === t.value ? 'bg-gray-800 text-blue-400' : 'text-gray-200 hover:bg-gray-800 hover:text-blue-400'
-                    }`}>
+                      theme === t.value
+                        ? 'bg-gray-800 text-blue-400'
+                        : 'text-gray-200 hover:bg-gray-800 hover:text-blue-400'
+                    }`}
+                  >
                     {t.label}
                   </li>
                 ))}
               </ul>
             )}
-          </div> 
- 
-          <button className='ml-auto text-white bg-gray-800 px-4 py-2 rounded-md hover:bg-gray-700 transition'>
-            Debug
+          </div>
+
+          <button
+            onClick={handleDebug}
+            disabled={isDebugging}
+            className={`ml-auto text-white px-4 py-2 rounded-md transition-all duration-200 ${
+              isDebugging
+                ? "bg-gray-700 cursor-not-allowed"
+                : "bg-gray-800 hover:bg-blue-700"
+            }`}
+          >
+            {isDebugging ? "Debugging..." : "Debug"}
           </button>
         </div>
 
@@ -116,12 +164,11 @@ function CodeEditor({ roomId }) {
           height="100%"
           theme={theme}
           language={language}
-          value={value}
           onMount={onMount}
           onChange={handleOnChange}
         />
       </div>
-
+ 
       <div className="w-full custom-xl:w-1/2 h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         <ActionView editorRef={editorRef} language={language} languageId={languageId} />
       </div>
