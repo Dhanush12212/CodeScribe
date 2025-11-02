@@ -5,12 +5,13 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import http from 'http';
+import bodyParser from 'body-parser';
 
 import AuthRoute from './routes/auth.routes.js';
 import CodeRunnerRoute from './routes/codeRunner.route.js';
 import connectDB from './db/connectDB.js'; 
 import initSocket from './socket/socket.js';
-import { codeAssistant } from './controller/codeAssistant.controller.js';
+import codeAssistantRoute from './routes/codeAssistant.route.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -22,6 +23,7 @@ initSocket(httpServer);
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
+app.use(bodyParser.json());
 app.use(cors({
     origin: ['http://localhost:5173'],
     credentials: true,
@@ -30,7 +32,7 @@ app.use(cors({
 // Routes
 app.use('/api/v1/auth', AuthRoute);
 app.use('/api/v1/execute', CodeRunnerRoute);
-app.use('/api/v1/codeAssistant', codeAssistant);
+app.use('/api/v1/codeAssistant', codeAssistantRoute);
 
 // Start Server
 const startServer = async () => {

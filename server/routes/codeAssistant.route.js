@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { codeAssistant } from '../controller/codeAssistant.controller';
+import { AskAI } from '../controller/codeAssistant.controller.js';
 
 const router = Router();
 
-router.route('/ask').post(codeAssistant); 
+router.route('/ask').post(AskAI); 
+// router.route('/debug').post(DebugAI);
 
 export default router;

@@ -1,4 +1,4 @@
-import axios from "axios";
+import fetch from "node-fetch";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -9,55 +9,54 @@ export const AskAI = async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: "Prompt is required." });
 
-    // Set response headers for streaming
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    const requestBody = {
-      model: "mistral:latest",
+    const body = {
+      model: "mistral:instruct",
       prompt: `
-You are a professional coding assistant.
-Return strictly in JSON format as:
-{
-  "explanation": "Explain the concept",
-  "code": "Write clean code"
-}
+        You are a coding assistant.
+        Reply in this strict JSON format:
+        {
+          "explanation": "Short and clear explanation only",
+          "code": "Clean formatted code"
+        }
 
-If the prompt requests Java code:
-- Use class name "Main"
-- Include public static void main(String args[])
+        If Java is requested:
+        - Use class name Main
+        - Include public static void main(String[] args)
 
-Prompt: ${prompt}`,
-      stream: true,
+        Prompt: ${prompt}
+      `,
+      stream: false,
     };
 
-    const response = await axios.post(MISTRAL_API_URL, requestBody, {
-      responseType: "stream",
+    const response = await fetch(MISTRAL_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
-    response.data.on("data", (chunk) => {
-      const text = chunk.toString();
-      if (text.includes("[DONE]")) {
-        res.write("event: done\ndata: [DONE]\n\n");
-        res.end();
-      } else {
-        res.write(`data: ${JSON.stringify({ token: text })}\n\n`);
-      }
-    });
+    if (!response.ok) {
+      return res.status(500).json({ error: "Failed to reach Mistral API." });
+    }
 
-    response.data.on("end", () => {
-      res.write("event: done\ndata: [DONE]\n\n");
-      res.end();
-    });
+    const data = await response.json();
+    const rawText = data?.response || "";
 
-    response.data.on("error", (err) => {
-      console.error("Stream error:", err.message);
-      res.end();
-    });
-  } catch (err) {
-    console.error("❌ Error in AskAI controller:", err.message);
-    if (!res.headersSent)
-      res.status(500).json({ error: "Internal server error." });
+    let explanation = "";
+    let code = "";
+
+    try {
+      const parsed = JSON.parse(rawText);
+      explanation = parsed.explanation || "";
+      code = parsed.code || "";
+    } catch {
+      const codeMatch = rawText.match(/```[a-z]*([\s\S]*?)```/i);
+      code = codeMatch ? codeMatch[1].trim() : "";
+      explanation = rawText.replace(/```[\s\S]*?```/, "").trim();
+    }
+
+    res.status(200).json({ explanation, code });
+  } catch (error) {
+    console.error("❌ AskAI Error:", error);
+    res.status(500).json({ error: error.message });
   }
 };
