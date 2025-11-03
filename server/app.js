@@ -12,6 +12,7 @@ import CodeRunnerRoute from './routes/codeRunner.route.js';
 import connectDB from './db/connectDB.js'; 
 import initSocket from './socket/socket.js';
 import codeAssistantRoute from './routes/codeAssistant.route.js';
+import roomRouter from './routes/room.route.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -32,7 +33,9 @@ app.use(cors({
 // Routes
 app.use('/api/v1/auth', AuthRoute);
 app.use('/api/v1/execute', CodeRunnerRoute);
-app.use('/api/v1/codeAssistant', codeAssistantRoute);
+app.use('/api/v1/codeAssistant', codeAssistantRoute); 
+app.use("/api/v1/room", roomRouter);
+
 
 // Start Server
 const startServer = async () => {

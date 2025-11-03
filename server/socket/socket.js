@@ -1,51 +1,54 @@
-import { Server } from 'socket.io';
-
-const rooms = new Map();
+import { Server } from "socket.io";
+import { rooms } from "./room.js"; 
 
 export default function initSocket(httpServer) {
-    const io = new Server(httpServer, {
-        cors: {
-            origin: ['http://localhost:5173'],
-            credentials: true,
-        }
+  const io = new Server(httpServer, {
+    cors: {
+      origin: ["http://localhost:5173"],
+      methods: ["GET", "POST"],
+      credentials: true,
+    },
+  });
+
+  io.on("connection", (socket) => {
+    console.log(`✅ User connected: ${socket.id}`);
+
+    socket.on("joinRoom", (roomId) => {
+      if (!roomId) return;
+ 
+      if (!rooms.has(roomId)) {
+        rooms.set(roomId, { code: "", language: "java" });
+        console.log(`🆕 Auto-created room: ${roomId}`);
+      }
+
+      socket.join(roomId);
+      const { code, language } = rooms.get(roomId);
+      console.log(`[Server] ${socket.id} joined room ${roomId}`);
+
+      socket.emit("roomJoined", { roomId });
+      socket.emit("updatedCode", { roomId, code, senderId: "server" });
+      socket.emit("languageChange", { roomId, language });
     });
 
-    io.on("connection", (socket) => {
-        console.log(`User Connected: ${socket.id}`);
-
-        socket.on("joinRoom", (roomId) => {
-            socket.join(roomId);
-
-            if (!rooms.has(roomId)) {
-                rooms.set(roomId, { code: "", language: "javascript" });
-            }
-
-            const { code, language } = rooms.get(roomId);
-
-            console.log(`User ${socket.id} joined room: ${roomId}`);
-            io.to(socket.id).emit("roomJoined", { roomId, message: `Joined room: ${roomId}` });
-            io.to(socket.id).emit("updatedCode", { roomId, code });
-            io.to(socket.id).emit("languageChange", { roomId, language });
-        });
-
-        socket.on("languageChange", ({ roomId, selectedLanguage }) => {
-            if (rooms.has(roomId)) {
-                rooms.get(roomId).language = selectedLanguage;
-                io.to(roomId).emit("languageChange", { roomId, language: selectedLanguage });
-            }
-        });
-
-        socket.on("updatedCode", ({ roomId, newCode }) => {
-            if (rooms.has(roomId)) {
-                rooms.get(roomId).code = newCode;
-                socket.to(roomId).emit("updatedCode", { roomId, code: newCode });
-            }
-        });
-
-        socket.on("disconnect", () => {
-            console.log(`User Disconnected: ${socket.id}`);
-        });
+    socket.on("languageChange", ({ roomId, selectedLanguage }) => {
+      if (!rooms.has(roomId)) return;
+      rooms.get(roomId).language = selectedLanguage;
+      io.to(roomId).emit("languageChange", {
+        roomId,
+        language: selectedLanguage,
+      });
     });
 
-    return io;
+    socket.on("updatedCode", ({ roomId, code, senderId }) => {
+      if (!rooms.has(roomId)) return;
+      rooms.get(roomId).code = code;
+      socket.to(roomId).emit("updatedCode", { roomId, code, senderId });
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`❎ User disconnected: ${socket.id}`);
+    });
+  });
+
+  return io;
 }
