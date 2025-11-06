@@ -11,14 +11,14 @@ export default function initSocket(httpServer) {
   });
 
   io.on("connection", (socket) => {
-    console.log(`✅ User connected: ${socket.id}`);
+    console.log(`User connected: ${socket.id}`);
 
     socket.on("joinRoom", (roomId) => {
       if (!roomId) return;
  
       if (!rooms.has(roomId)) {
         rooms.set(roomId, { code: "", language: "java" });
-        console.log(`🆕 Auto-created room: ${roomId}`);
+        console.log(`Auto-created room: ${roomId}`);
       }
 
       socket.join(roomId);
@@ -46,7 +46,7 @@ export default function initSocket(httpServer) {
     });
 
     socket.on("disconnect", () => {
-      console.log(`❎ User disconnected: ${socket.id}`);
+      console.log(`User disconnected: ${socket.id}`);
     });
   });
 

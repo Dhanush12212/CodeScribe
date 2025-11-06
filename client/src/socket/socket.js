@@ -1,7 +1,7 @@
-import { io } from 'socket.io-client';
+import { io } from "socket.io-client";
 
-export const socket = io('http://localhost:8000', {
-    withCredentials: true,
-    transports: ["websocket"], 
+export const socket = io("http://localhost:8000", {
+  withCredentials: true,
+  transports: ["websocket"],
+  autoConnect: false,  
 });
-
