@@ -13,6 +13,7 @@ import connectDB from './db/connectDB.js';
 import initSocket from './socket/socket.js';
 import codeAssistantRoute from './routes/codeAssistant.route.js';
 import roomRouter from './routes/room.route.js';
+import { verifyJWT } from './middleware/auth.middleware.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -29,6 +30,7 @@ app.use(cors({
     origin: ['http://localhost:5173'],
     credentials: true,
 }));
+app.use(verifyJWT);
 
 // Routes
 app.use('/api/v1/auth', AuthRoute);

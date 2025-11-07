@@ -4,10 +4,8 @@ dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
+ 
 
-/**
- * AskAI — Generates explanation + code snippet
- */
 const AskAI = async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -23,7 +21,7 @@ const AskAI = async (req, res) => {
                 You are a concise coding assistant.
                 Respond strictly in JSON format:
                 {
-                  "explanation": "Short and clear explanation",
+                  "explanation": "brief and clear explanation",
                   "code": "Clean and formatted code"
                 }
 
@@ -77,10 +75,8 @@ const AskAI = async (req, res) => {
     return res.status(500).json({ error: "Gemini request failed.", details: error.message });
   }
 };
+ 
 
-/**
- * DebugAI — Fixes & cleans submitted code
- */
 const DebugAI = async (req, res) => {
   try {
     const { code, language } = req.body;
