@@ -1,16 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import CodeRunner from "../components/Actions/CodeRunner";
 import CodeAssisstant from "../components/Actions/CodeAssisstant";
 import CodeExplain from "../components/Actions/CodeExplain";
 import RelatedPrograms from "../components/Actions/RelatedPrograms";
 import ActionButtons from "../components/Actions/ActionButtons";
 import { LANGUAGE_IDS } from '../constants'; 
+
  
 const ActionView = ({ editorRef, language }) => {
   const [activeComponent, setActiveComponent] = useState("Code Assisstant");
   const [showInfo, setShowInfo] = useState(false);
   const [showRunPopup, setShowRunPopup] = useState(false);
-
+  
   const handleRunClick = () => {
     setActiveComponent("CodeRunner");
     setShowRunPopup(true);

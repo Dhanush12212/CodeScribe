@@ -17,7 +17,8 @@ const GoogleAuth = ({ clientID , setMessage, navigate }) => {
         `${API_URL}/auth/google`,
         { credential: token },  
         { withCredentials: true }
-      );
+      ); 
+      
       const { user } = response.data.data;
       localStorage.setItem('user', JSON.stringify(user));
       

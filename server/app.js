@@ -30,10 +30,11 @@ app.use(cors({
     origin: ['http://localhost:5173'],
     credentials: true,
 }));
-app.use(verifyJWT);
 
 // Routes
 app.use('/api/v1/auth', AuthRoute);
+
+app.use(verifyJWT);
 app.use('/api/v1/execute', CodeRunnerRoute);
 app.use('/api/v1/codeAssistant', codeAssistantRoute); 
 app.use("/api/v1/room", roomRouter);

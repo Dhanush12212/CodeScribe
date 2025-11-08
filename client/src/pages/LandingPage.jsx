@@ -33,7 +33,7 @@ export default function LandingPage() {
 
   const [explanation, setExplanation] = useState("");
 
-  const handleOnClick = () => navigate("/room");
+  const handleOnClick = () => navigate("/register");
 
   const handleExplainCode = () => {
     setExplanation(

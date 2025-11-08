@@ -7,7 +7,6 @@ const userSchema = new Schema(
       required: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     email: {
       type: String,
@@ -15,12 +14,11 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     password: {
       type: String, 
       required: function () {
-        return !this.googleId;
+        return !this.googleId; // Only require password if NOT Google login
       },
     },
     profilePic: {

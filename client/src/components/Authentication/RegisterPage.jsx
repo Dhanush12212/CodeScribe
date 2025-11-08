@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom"; 
 import axios from "axios";
 import { MdOutlineMail, MdOutlinePassword } from "react-icons/md";  
@@ -25,8 +25,8 @@ function RegisterPage({ register }) {
         `${API_URL}/auth/register`,
         { username, email, password },
         { withCredentials: true }
-      );  
-      
+      );   
+
       const { user } = response.data.data;
       localStorage.setItem('user', JSON.stringify(user));
       setMessage({ text: "🎉 Registered Successfully!", type: "success" });
@@ -40,6 +40,31 @@ function RegisterPage({ register }) {
 
   const codeIcons = [<SiJavascript key="js" />, <SiReact key="react" />, <SiHtml5 key="html" />, <SiCss3 key="css"/>, <FaPython key="python"/>, <SiCplusplus  key="c++"/>, <FaJava key="java"/>  ];
 
+  const iconStyles = useMemo(() =>
+    codeIcons.map(() => ({
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      animationDuration: `${Math.random() * 10 + 5}s`,
+      fontSize: `${Math.random() * 40 + 20}px`,
+    })),
+    []
+  );
+
+  const FloatingIcons = useMemo(() => (
+    <div className="absolute w-full h-full">
+      {codeIcons.map((icon, i) => (
+        <div
+          key={i}
+          className="absolute text-white/20 text-4xl animate-float-code"
+          style={iconStyles[i]}
+        >
+          {icon}
+        </div>
+      ))}
+    </div>
+  ), [iconStyles, codeIcons]);
+
+
   return (
     <div className="relative w-full h-screen flex items-center justify-center overflow-hidden">
       {/* Gradient Background */}
@@ -48,20 +73,7 @@ function RegisterPage({ register }) {
 
       {/* Floating Code Icons */}
       <div className="absolute w-full h-full">
-        {codeIcons.map((icon, i) => (
-          <div
-            key={i}
-            className="absolute text-white/20 text-4xl animate-float-code"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDuration: `${Math.random() * 10 + 5}s`,
-              fontSize: `${Math.random() * 40 + 20}px`,
-            }}
-          >
-            {icon}
-          </div>
-        ))}
+        {FloatingIcons} 
       </div>
 
       {/* Register Form */}
@@ -81,9 +93,9 @@ function RegisterPage({ register }) {
         )}
 
         {/* Inputs */}
-        <div className="w-full flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-4">
           <div
-            className="flex items-center gap-3 bg-gray-800 p-5 rounded-2xl hover:bg-gray-700 transition-all duration-300 shadow-inner"
+            className="flex items-center gap-3 bg-gray-800 p-5 rounded-2xl hover:bg-gray-700 transition-all duration-300 shadow-inner mt-5"
             style={{ border: "1px solid rgba(255,255,255,0.2)" }}
           >
             <FaUser className="text-white text-xl" />

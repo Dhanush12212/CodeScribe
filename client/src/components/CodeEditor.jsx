@@ -38,7 +38,9 @@ function CodeEditor({ roomId }) {
       const response = await axios.post(`${API_URL}/codeAssistant/debug`, {
         code: currentCode,
         language,
-      });
+        },
+        { withCredentials: true }
+      );
 
       const { debuggedCode } = response.data;
       if (response.status === 200 && debuggedCode) {
