@@ -84,15 +84,12 @@ function CodeEditor({ roomId }) {
         code !== latestCodeRef.current
       ) {
         const editor = editorRef.current;
-        if (!editor) return;
-
+        if (!editor) return; 
         const cursor = editor.getPosition();
-        isRemoteUpdate.current = true;  
-
+        isRemoteUpdate.current = true;   
         latestCodeRef.current = code;
         editor.setValue(code);
-        if (cursor) editor.setPosition(cursor);
- 
+        if (cursor) editor.setPosition(cursor); 
         setTimeout(() => {
           isRemoteUpdate.current = false;
         }, 50);
@@ -104,6 +101,7 @@ function CodeEditor({ roomId }) {
       socket.off("updatedCode"); 
     };
   }, [roomId]);
+
  
   const handleOnChange = useCallback(
     (newCode) => {
@@ -174,7 +172,7 @@ function CodeEditor({ roomId }) {
                   <li
                     key={t.value}
                     onClick={() => onSelectTheme(t.value)}
-                    className={`cursor-pointer px-2 py-2 text-sm md:text-base font-semibold transition-colors duration-150 ${
+                    className={`cursor-pointer px-2 py-2 text-sm md:text-base font-medium transition-colors duration-150 ${
                       theme === t.value
                         ? "bg-gray-800 text-blue-400"
                         : "text-gray-200 hover:bg-gray-800 hover:text-blue-400"

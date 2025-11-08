@@ -26,9 +26,13 @@ function CodeAssistant() {
     try {
       const res = await fetch(`${API_URL}/codeAssistant/ask`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json"
+        },
+        credentials: "include",  
         body: JSON.stringify({ prompt: query }),
       });
+
 
       const data = await res.json();
       const explanation = (data.explanation || "").trim();

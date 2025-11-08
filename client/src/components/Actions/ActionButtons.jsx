@@ -2,6 +2,7 @@ import React from "react";
 import { Info } from "lucide-react";
 
 const ActionButtons = ({ activeComponent, setActiveComponent, onRunClick, onShowInfo }) => {
+  
   const buttonBaseStyle =
     "w-full py-3 rounded-md font-medium transition-all duration-200";
 
@@ -11,6 +12,7 @@ const ActionButtons = ({ activeComponent, setActiveComponent, onRunClick, onShow
     { label: "Explain Code", key: "Explain Code", color: "#7c3aed" },
     { label: "Related Programs", key: "Related Programs", color: "#4b5563" },
   ];
+
 
   return (
     <div className="flex gap-3 w-full items-center mx-2">

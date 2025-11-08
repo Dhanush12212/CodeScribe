@@ -8,18 +8,22 @@ import withReactContent from "sweetalert2-react-content";
 import { FiLogIn, FiLogOut, FiAlertTriangle } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { Typewriter } from "react-simple-typewriter";
+import { assets } from "../assets/assets.js";
 
 const MySwal = withReactContent(Swal);
 
 function RoomAccess() {
   const [roomId, setRoomId] = useState("");
-  const [user, setUser] = useState(null);
-  const [isChecking, setIsChecking] = useState(true);
-  const navigate = useNavigate();
+  const [isChecking, setIsChecking] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
   const suppressAutoNavigateRef = useRef(false);
+  const navigate = useNavigate();
 
-  // ✅ Authentication check runs first
-  useEffect(() => {
+   useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await axios.get(`${API_URL}/auth/isLoggedIn`, { withCredentials: true });
@@ -33,41 +37,34 @@ function RoomAccess() {
     checkAuth();
   }, [navigate]);
 
-  // ✅ Show loader while checking auth
-  if (isChecking) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-[#0f0a19] text-white text-xl">
-        Checking authentication...
-      </div>
-    );
-  }
-
-  // ✅ Show welcome popup once authenticated
   useEffect(() => {
     if (user) {
       MySwal.fire({
         title: <p className="text-xl font-semibold text-green-400">Welcome Back!</p>,
-        html: `<p style="font-size:16px;">Hello, ${user.username}!</p>`,
-        icon: "success",
-        timer: 1500,
+        html: `<p style="font-size:16px;">Hello, ${user.name || "User"}!</p>`,
+        iconHtml: `<svg xmlns="http://www.w3.org/2000/svg" class="text-green-500 mx-auto w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>`,
         showConfirmButton: false,
+        timer: 1800,
+        width: "380px",
         background: "#1e1e2e",
-        color: "#fff"
+        color: "#fff",
+        padding: "1.5rem",
+        timerProgressBar: true,
       });
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
+    socket.on("connect", () => console.log(`Connected: ${socket.id}`));
     socket.on("roomJoined", ({ roomId }) => {
+      if (suppressAutoNavigateRef.current) return;
       Swal.close();
       navigate(`/CodeScribe/${roomId}`);
     });
-
     socket.on("roomCreated", ({ roomId }) => {
       Swal.close();
       navigate(`/CodeScribe/${roomId}`);
     });
-
     socket.on("error", (error) => {
       Swal.close();
       MySwal.fire({
@@ -77,8 +74,8 @@ function RoomAccess() {
         confirmButtonColor: "#EF4444",
       });
     });
-
     return () => {
+      socket.off("connect");
       socket.off("roomJoined");
       socket.off("roomCreated");
       socket.off("error");
@@ -87,96 +84,310 @@ function RoomAccess() {
 
   const handleJoinRoom = async () => {
     if (!roomId.trim()) {
-      return MySwal.fire({
+      MySwal.fire({
         iconHtml: <FiAlertTriangle size={50} className="text-yellow-500" />,
         title: "Missing Room ID",
-        text: "Please enter a Room ID first.",
+        text: "Please enter a valid Room ID before joining!",
         confirmButtonColor: "#16A34A",
       });
+      return;
     }
-
     try {
-      const response = await axios.get(`${API_URL}/room/${roomId}`, { withCredentials: true });
-
+      const response = await axios.get(`${API_URL}/room/${roomId}`);
       if (!response.data.exists) {
-        return MySwal.fire({
+        MySwal.fire({
           iconHtml: <FiAlertTriangle size={50} className="text-red-500" />,
           title: "Room Not Found",
+          text: "This room ID does not exist. Please create a new one or check your code.",
           confirmButtonColor: "#EF4444",
         });
+        return;
       }
-
-      Swal.fire({
-        title: "Joining...",
+      MySwal.fire({
+        title: <p className="text-xl font-semibold text-green-400">Joining Room...</p>,
+        html: `<div class="flex flex-col items-center justify-center gap-3">
+                <svg class="animate-spin h-10 w-10 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"></path>
+                </svg>
+                <p class="text-gray-300">Please wait while we connect you...</p>
+              </div>`,
         showConfirmButton: false,
+        allowOutsideClick: false,
         background: "#1e1e2e",
-        color: "#fff"
+        color: "#fff",
+        width: "360px",
+        padding: "1.5rem",
       });
-
-      if (socket.connected) socket.emit("joinRoom", roomId);
-      else socket.connect(() => socket.emit("joinRoom", roomId));
-
-    } catch {
+      setTimeout(() => {
+        if (socket.connected) {
+          socket.emit("joinRoom", roomId);
+        } else {
+          socket.connect();
+          socket.once("connect", () => socket.emit("joinRoom", roomId));
+        }
+      }, 1000);
+    } catch (error) {
+      console.error("Error checking room:", error);
       MySwal.fire({
         iconHtml: <FiAlertTriangle size={50} className="text-red-500" />,
         title: "Connection Error",
+        text: "Unable to verify room existence. Please try again later.",
         confirmButtonColor: "#EF4444",
       });
     }
   };
+const handleCreateRoom = () => {
+  if (roomId.trim()) {
+    MySwal.fire({
+      iconHtml: <FiAlertTriangle size={50} className="text-yellow-500" />,
+      title: "Cannot Create Room",
+      text: "Please clear the Room ID field before creating a new room!",
+      confirmButtonColor: "#3B82F6",
+    });
+    return;
+  }
 
-  const handleCreateRoom = () => {
-    const newRoomId = Math.random().toString(36).substring(2, 8);
-    socket.emit("joinRoom", newRoomId);
-    navigate(`/CodeScribe/${newRoomId}`);
-  };
+  const newRoomId = Math.random().toString(36).substring(2, 8);
+
+  MySwal.fire({
+    title: <p className="text-xl font-semibold text-blue-400">Creating Room...</p>,
+    html: `<div class="flex flex-col items-center justify-center gap-3">
+            <svg class="animate-spin h-10 w-10 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"></path>
+            </svg>
+            <p class="text-gray-300">Setting up your room...</p>
+          </div>`,
+    showConfirmButton: false,
+    allowOutsideClick: false,
+    background: "#1e1e2e",
+    color: "#fff",
+    width: "360px",
+    padding: "1.5rem",
+  });
+
+  setTimeout(() => {
+    suppressAutoNavigateRef.current = true;
+
+    if (socket.connected) {
+      socket.emit("joinRoom", newRoomId);
+    } else {
+      socket.connect();
+      socket.once("connect", () => socket.emit("joinRoom", newRoomId));
+    }
+
+    MySwal.fire({
+      title: <p className="text-2xl font-bold text-blue-400">Room Created!</p>,
+      html: `
+        <div class="flex flex-col items-center justify-center gap-4 text-white">
+          <p>Your room ID:</p>
+          <p id="roomCode" class="text-3xl font-mono bg-gray-800 px-4 py-2 rounded-lg" style="border: 1px solid #3B82F6;">${newRoomId}</p>
+          <button id="copyBtn" class="mt-3 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-semibold">
+            Copy Room ID
+          </button>
+          <p id="copiedMsg" class="text-green-400 mt-2 hidden">Copied to clipboard</p>
+          <p class="text-gray-400 mt-3 text-sm">(Click outside to enter the room)</p>
+        </div>
+      `,
+      showConfirmButton: false,
+      allowOutsideClick: true, 
+      background: "#1e1e2e",
+      color: "#fff",
+      width: "380px",
+      padding: "1.5rem",
+      didOpen: () => {
+        const copyBtn = document.getElementById("copyBtn");
+        const copiedMsg = document.getElementById("copiedMsg");
+
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(newRoomId).then(() => {
+            copiedMsg.classList.remove("hidden");
+            copyBtn.textContent = "Copied!";
+            copyBtn.disabled = true;
+
+            setTimeout(() => {
+              Swal.close();
+              suppressAutoNavigateRef.current = false;
+              navigate(`/CodeScribe/${newRoomId}`);
+            }, 100);
+          });
+        });
+      },
+      didClose: () => {
+        suppressAutoNavigateRef.current = false;
+        navigate(`/CodeScribe/${newRoomId}`);
+      },
+    });
+  }, 1000);
+};
+
 
   const handleLogout = async () => {
-    await axios.put(`${API_URL}/auth/logout`, {}, { withCredentials: true });
-    localStorage.removeItem("user");
-    navigate("/register");
+    try {
+      await axios.put(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      localStorage.removeItem("user");
+      setUser(null);
+      navigate('/register');
+      MySwal.fire({
+        title: <p>Logged Out</p>,
+        html: `<p style="font-size:16px;">You have successfully logged out!</p>`,
+        iconHtml: <FiLogOut size={50} className="text-red-500" />,
+        showConfirmButton: false,
+        timer: 1800,
+        width: "350px",
+        padding: "1.5rem",
+        timerProgressBar: true,
+      });
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
   };
+
+  if (isChecking) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#0f0a19] text-white text-xl">
+        Checking authentication...
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-screen relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
-      
-      {user && (
-        <button
-          className="absolute top-4 right-4 bg-red-500 px-5 py-2 rounded-lg text-white font-bold hover:bg-red-600 transition-all duration-300 flex items-center gap-2"
-          onClick={handleLogout}
+      <div className="absolute inset-0 z-0 select-none">
+        {[
+          { name: "JAVA", color: "text-orange-400", top: "10%", left: "5%" },
+          { name: "React", color: "text-cyan-400", top: "35%", left: "50%" },
+          { name: "Python", color: "text-green-400", top: "65%", left: "70%" },
+          { name: "JavaScript", color: "text-yellow-400", top: "50%", left: "10%" },
+          { name: "C++", color: "text-blue-300", top: "80%", left: "40%" },
+          { name: "Node.js", color: "text-lime-400", top: "15%", left: "60%" },
+        ].map((lang, i) => (
+          <p
+            key={i}
+            className={`absolute ${lang.color} opacity-20 text-5xl font-bold animate-float-slow`}
+            style={{ top: lang.top, left: lang.left }}
+          >
+            {lang.name}
+          </p>
+        ))}
+      </div>
+      <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 sm:px-0">
+        {user ? (
+          <div className="absolute top-4 right-4 select-none ">
+            <div className="relative">
+              <img
+                src={assets.Profile}
+                alt="Profile"
+                onClick={() => setShowMenu((prev) => !prev)}
+                className="bg-gray-600 w-12 h-12 rounded-full shadow-md cursor-pointer 
+                transition-all duration-300 hover:shadow-blue-500/40 hover:ring-2 hover:ring-blue-400 hover:scale-[1.06]"
+                style={{ border: "1px solid rgba(255,255,255,0.25)" }}
+              />
+
+              {showMenu && (
+                <div
+                  className="absolute right-0 mt-3 w-56 rounded-xl bg-[#14151b]/95 backdrop-blur-lg shadow-2xl z-50 animate-dropdown flex items-center flex-col"
+                  style={{ border: "1px solid rgba(255,255,255,0.20)" }}
+                >
+                
+                  {/* Profile Summary */}
+                  <div
+                    className="px-4 py-4 flex items-center gap-3"
+                    style={{ borderBottom: "1px solid rgba(255,255,255,0.18)" }}
+                  >
+                    <img
+                      src={assets.Profile}
+                      alt="User Avatar"
+                      className="w-11 h-11 rounded-full shadow-sm bg-gray-600"
+                      style={{ border: "1px solid rgba(255,255,255,0.25)" }}
+                    />
+                    <div className="leading-tight"> 
+                      <p className="text-sm font-semibold text-blue-400 truncate max-w-[140px]">
+                        {user.username || user.name || "User"}
+                      </p>
+                    </div>
+                  </div>
+              
+                  {/* Menu Button */}
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 
+                    hover:underline hover:text-red-600 transition-all duration-200 text-center"
+                  >
+                    <FiLogOut size={18} /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <Link to="/register">
+            <button className="absolute top-4 right-4 bg-zinc-700 px-8 py-3 rounded-lg text-white font-bold shadow-lg 
+              hover:bg-zinc-500 hover:text-black transition-all duration-300 flex items-center gap-2">
+              <FiLogIn size={20} /> Sign In
+            </button>
+          </Link>
+        )}
+ 
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="flex flex-col py-20 sm:py-40 items-center text-center gap-8 bg-white/10 backdrop-blur-xl p-8 sm:p-12 rounded-3xl shadow-xl"
+          style={{ border: "1px solid rgba(255,255,255,0.2)" }}
         >
-          <FiLogOut size={20} /> Logout
-        </button>
-      )}
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="flex flex-col py-32 items-center gap-6 bg-white/10 backdrop-blur-xl p-10 rounded-3xl shadow-xl"
-      >
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-600">
-          Code Together, Instantly!
-        </h1>
-
-        <div className="flex gap-6">
-          <button onClick={handleCreateRoom} className="px-6 py-3 bg-blue-700 rounded-xl hover:bg-blue-600">
-            Create Room
-          </button>
-          <button onClick={handleJoinRoom} className="px-6 py-3 bg-green-700 rounded-xl hover:bg-green-600">
-            Join Room
-          </button>
-        </div>
-
-        <input
-          type="text"
-          placeholder="Enter Room Code..."
-          className="text-center px-4 py-3 w-full rounded-md bg-transparent border border-gray-600"
-          value={roomId}
-          onChange={(e) => setRoomId(e.target.value)}
-        />
-      </motion.div>
+          <div className="flex flex-col gap-4 text-white">
+            <h1 className="lg:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-600 drop-shadow-lg text-center tracking-tight">
+              Code Together, Anywhere, Anytime!
+            </h1>
+            <p className="sm:text-2xl font-medium text-gray-200 opacity-90 drop-shadow-md text-center leading-relaxed">
+              <Typewriter
+                words={[
+                  "Collaborate in real-time",
+                  "Write, Compile, and Share instantly",
+                  "Experience seamless teamwork",
+                ]}
+                loop={0}
+                cursor
+                cursorStyle="_"
+                typeSpeed={70}
+                deleteSpeed={50}
+                delaySpeed={1500}
+              />
+            </p>
+          </div>
+          <div className="flex gap-6">
+            <button
+              className="px-8 py-4 text-lg font-semibold text-white bg-blue-700 rounded-xl shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-all duration-300"
+              onClick={handleCreateRoom}
+            >
+              Create Room
+            </button>
+            <button
+              className="px-8 py-4 text-lg font-semibold text-white bg-green-700 rounded-xl shadow-md hover:bg-green-600 focus:ring-2 focus:ring-green-300 transition-all duration-300"
+              onClick={handleJoinRoom}
+            >
+              Join Room
+            </button>
+          </div>
+          <div className="flex mt-3 items-center gap-4">
+            <input
+              type="text"
+              placeholder="Enter Room Code..."
+              className="outline-none text-white text-center px-4 py-3 lg:text-xl md:text-lg w-full rounded-md shadow-md focus:ring-2 focus:ring-green-600 bg-transparent placeholder-gray-400"
+              style={{ border: "1px solid rgba(255, 255, 255, 0.2)" }}
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+            />
+          </div>
+        </motion.div>
+      </div>
     </div>
   );
 }
 
+
+
 export default RoomAccess;
+

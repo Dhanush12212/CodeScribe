@@ -14,7 +14,9 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
 
   const pollResult = async (token) => {
     try {
-      const res = await axios.get(`${API_URL}/execute/result/${token}`);
+      const res = await axios.get(`${API_URL}/execute/result/${token}`,
+        {withCredentials: true}
+      );
       const data = res.data; 
       
       if (data.status.id >= 3) {  
@@ -39,11 +41,17 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
       setIsLoading(true);
       setInputValue(userInput);
       
-      const runResponse = await axios.post(`${API_URL}/execute/runCode`, {
-        source_code: sourceCode,
-        language_id: languageId,  
-        stdin: userInput,
-      }); 
+      const runResponse = await axios.post( `${API_URL}/execute/runCode`,
+        {
+          source_code: sourceCode,
+          language_id: languageId,
+          stdin: userInput,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
       
       const token = runResponse.data.token;
       if (!token) throw new Error("Failed to get submission token");

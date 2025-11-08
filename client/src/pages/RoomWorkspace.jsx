@@ -8,8 +8,7 @@ function RoomWorkspace() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);  
-  
-
+   
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -20,8 +19,7 @@ function RoomWorkspace() {
       }
     };
     checkAuth();
-  }, [navigate]);
-
+  }, [navigate]); 
   if (isChecking) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#0f0a19] text-white text-xl">
