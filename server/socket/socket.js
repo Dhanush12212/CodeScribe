@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { rooms } from "./room.js"; 
+import { rooms, roomMessages } from "./room.js"; 
 
 export default function initSocket(httpServer) {
   const io = new Server(httpServer, {
@@ -18,12 +18,12 @@ export default function initSocket(httpServer) {
  
       if (!rooms.has(roomId)) {
         rooms.set(roomId, { code: "", language: "java" });
-        console.log(`Auto-created room: ${roomId}`);
+        // console.log(`Auto-created room: ${roomId}`);
       }
 
       socket.join(roomId);
       const { code, language } = rooms.get(roomId);
-      console.log(`[Server] ${socket.id} joined room ${roomId}`);
+      // console.log(`[Server] ${socket.id} joined room ${roomId}`);
 
       socket.emit("roomJoined", { roomId });
       socket.emit("updatedCode", { roomId, code, senderId: "server" });
@@ -32,6 +32,7 @@ export default function initSocket(httpServer) {
 
     socket.on("languageChange", ({ roomId, selectedLanguage }) => {
       if (!rooms.has(roomId)) return;
+
       rooms.get(roomId).language = selectedLanguage;
       io.to(roomId).emit("languageChange", {
         roomId,
@@ -43,6 +44,47 @@ export default function initSocket(httpServer) {
       if (!rooms.has(roomId)) return;
       rooms.get(roomId).code = code;
       socket.to(roomId).emit("updatedCode", { roomId, code, senderId });
+    });
+
+    //Handle send Message
+    socket.on("sendMessage", ({ roomId, sender, text}) => {
+      if( !roomId || !text) return;
+
+      //Create message entry if none
+      if(!roomMessages.has(roomId)) {
+        roomMessages.set(roomId, []);
+      }
+
+      const message = {
+        sender,
+        text,
+        timestamp: new Date(),
+      };
+
+      //Save to memory
+      roomMessages.get(roomId).push(message);
+
+      //BroadCast to all in room
+      io.to(roomId).emit('receiveMessage', message); 
+    });
+
+    //Send Chat History when user joined
+    const chatHistory = roomMessages.get(roomId) || [];
+    socket.emit("chatHistory", chatHistory);
+
+    //Clean Chats when user disconnects
+    socket.on('disconnecting', () => {
+      socket.rooms.forEach((roomId) => {
+        if(roomId != socket.id) {
+          const room = io.sockets.adapter.rooms.get(roomId);
+          const userCount = room ? room.size -1 : 0;
+
+          if(userCount <= 0) {
+            console.log("Deleted Chats"); 
+            roomMessages.delete(roomId);
+          }
+        }
+      });
     });
 
     socket.on("disconnect", () => {
