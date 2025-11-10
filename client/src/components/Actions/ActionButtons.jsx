@@ -9,10 +9,9 @@ const ActionButtons = ({ activeComponent, setActiveComponent, onRunClick, onShow
   const buttons = [
     { label: "Run Code", key: "CodeRunner", color: "#16a34a" },
     { label: "Code Assistant", key: "Code Assisstant", color: "#2563eb" },
-    { label: "Explain Code", key: "Explain Code", color: "#7c3aed" },
-    { label: "Related Programs", key: "Related Programs", color: "#4b5563" },
+    { label: "Room Chat", key: "Room Chat", color: "#6366F1" },
+    { label: "Related Programs", key:  "Related Programs", color: "#8b5cf6" },
   ];
-
 
   return (
     <div className="flex gap-3 w-full items-center mx-2">
