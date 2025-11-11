@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import CodeRunner from "../components/Actions/CodeRunner";
 import CodeAssisstant from "../components/Actions/CodeAssisstant";
-import CodeExplain from "../components/Actions/CodeExplain";
+import RoomChat from "../components/Actions/RoomChat";
 import RelatedPrograms from "../components/Actions/RelatedPrograms";
 import ActionButtons from "../components/Actions/ActionButtons";
 import { LANGUAGE_IDS } from '../constants'; 
 
- 
 const ActionView = ({ editorRef, language }) => {
-  const [activeComponent, setActiveComponent] = useState("Code Assisstant");
+  const [activeComponent, setActiveComponent] = useState("CodeRunner");
   const [showInfo, setShowInfo] = useState(false);
   const [showRunPopup, setShowRunPopup] = useState(false);
   
@@ -34,8 +33,8 @@ const ActionView = ({ editorRef, language }) => {
       case "Code Assisstant":
         return <CodeAssisstant />;
 
-      case "Explain Code":
-        return <CodeExplain />;
+      case "Room Chat":
+        return <RoomChat />;
 
       case "Related Programs":
         return <RelatedPrograms />;

@@ -263,9 +263,8 @@ export default function LandingPage() {
             "Google Auth",
             "Framer-Motion",
             "Tailwind CSS",
-            "Judge0 API",
-            "Ollama",
-            "Deepseek-coder",
+            "Judge0 API", 
+            "Gemini Model",
           ].map((tech) => (
             <motion.div
               key={tech}

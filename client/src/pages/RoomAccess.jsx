@@ -13,7 +13,9 @@ import { assets } from "../assets/assets.js";
 const MySwal = withReactContent(Swal);
 
 function RoomAccess() {
-  const [roomId, setRoomId] = useState("");
+  
+  const [roomId, setRoomId] = useState("");  
+  
   const [isChecking, setIsChecking] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [user, setUser] = useState(() => {
@@ -137,18 +139,20 @@ function RoomAccess() {
       });
     }
   };
-const handleCreateRoom = () => {
-  if (roomId.trim()) {
-    MySwal.fire({
-      iconHtml: <FiAlertTriangle size={50} className="text-yellow-500" />,
-      title: "Cannot Create Room",
-      text: "Please clear the Room ID field before creating a new room!",
-      confirmButtonColor: "#3B82F6",
-    });
-    return;
+
+  const handleCreateRoom = () => {
+    if (roomId.trim()) {
+      MySwal.fire({
+        iconHtml: <FiAlertTriangle size={50} className="text-yellow-500" />,
+        title: "Cannot Create Room",
+        text: "Please clear the Room ID field before creating a new room!",
+        confirmButtonColor: "#3B82F6",
+      });
+      return;
   }
 
   const newRoomId = Math.random().toString(36).substring(2, 8);
+  localStorage.setItem("roomId", newRoomId);
 
   MySwal.fire({
     title: <p className="text-xl font-semibold text-blue-400">Creating Room...</p>,
@@ -257,11 +261,11 @@ const handleCreateRoom = () => {
       <div className="absolute inset-0 z-0 select-none">
         {[
           { name: "JAVA", color: "text-orange-400", top: "10%", left: "5%" },
-          { name: "React", color: "text-cyan-400", top: "35%", left: "50%" },
-          { name: "Python", color: "text-green-400", top: "65%", left: "70%" },
+          { name: "React", color: "text-cyan-400", top: "30%", left: "90%" },
+          { name: "Python", color: "text-green-400", top: "65%", left: "80%" },
           { name: "JavaScript", color: "text-yellow-400", top: "50%", left: "10%" },
-          { name: "C++", color: "text-blue-300", top: "80%", left: "40%" },
-          { name: "Node.js", color: "text-lime-400", top: "15%", left: "60%" },
+          { name: "C++", color: "text-blue-300", top: "90%", left: "40%" },
+          { name: "Node.js", color: "text-lime-400", top: "10%", left: "60%" },
         ].map((lang, i) => (
           <p
             key={i}
@@ -273,14 +277,14 @@ const handleCreateRoom = () => {
         ))}
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 sm:px-0">
-        {user ? (
+        {user && (
           <div className="absolute top-4 right-4 select-none ">
             <div className="relative">
               <img
                 src={assets.Profile}
                 alt="Profile"
                 onClick={() => setShowMenu((prev) => !prev)}
-                className="bg-gray-600 w-12 h-12 rounded-full shadow-md cursor-pointer 
+                className="bg-gray-400 w-12 h-12 rounded-full shadow-md cursor-pointer 
                 transition-all duration-300 hover:shadow-blue-500/40 hover:ring-2 hover:ring-blue-400 hover:scale-[1.06]"
                 style={{ border: "1px solid rgba(255,255,255,0.25)" }}
               />
@@ -299,11 +303,11 @@ const handleCreateRoom = () => {
                     <img
                       src={assets.Profile}
                       alt="User Avatar"
-                      className="w-11 h-11 rounded-full shadow-sm bg-gray-600"
+                      className="w-11 h-11 rounded-full shadow-sm bg-gray-400"
                       style={{ border: "1px solid rgba(255,255,255,0.25)" }}
                     />
                     <div className="leading-tight"> 
-                      <p className="text-sm font-semibold text-blue-400 truncate max-w-[140px]">
+                      <p className="text-md font-semibold text-blue-400 truncate max-w-[140px]">
                         {user.username || user.name || "User"}
                       </p>
                     </div>
@@ -313,7 +317,7 @@ const handleCreateRoom = () => {
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-gray-300 
-                    hover:underline hover:text-red-600 transition-all duration-200 text-center"
+                    hover:underline hover:text-red-600 transition-all duration-200 text-center cursor-pointer"
                   >
                     <FiLogOut size={18} /> Logout
                   </button>
@@ -321,13 +325,6 @@ const handleCreateRoom = () => {
               )}
             </div>
           </div>
-        ) : (
-          <Link to="/register">
-            <button className="absolute top-4 right-4 bg-zinc-700 px-8 py-3 rounded-lg text-white font-bold shadow-lg 
-              hover:bg-zinc-500 hover:text-black transition-all duration-300 flex items-center gap-2">
-              <FiLogIn size={20} /> Sign In
-            </button>
-          </Link>
         )}
  
         <motion.div
@@ -359,13 +356,13 @@ const handleCreateRoom = () => {
           </div>
           <div className="flex gap-6">
             <button
-              className="px-8 py-4 text-lg font-semibold text-white bg-blue-700 rounded-xl shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-all duration-300"
+              className="px-8 py-4 text-lg font-semibold text-white bg-blue-700 cursor-pointer rounded-xl shadow-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-all duration-300"
               onClick={handleCreateRoom}
             >
               Create Room
             </button>
             <button
-              className="px-8 py-4 text-lg font-semibold text-white bg-green-700 rounded-xl shadow-md hover:bg-green-600 focus:ring-2 focus:ring-green-300 transition-all duration-300"
+              className="px-8 py-4 text-lg font-semibold text-white bg-green-700 rounded-xl cursor-pointer shadow-md hover:bg-green-600 focus:ring-2 focus:ring-green-300 transition-all duration-300"
               onClick={handleJoinRoom}
             >
               Join Room
