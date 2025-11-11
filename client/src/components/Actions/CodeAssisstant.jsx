@@ -105,7 +105,7 @@ function CodeAssistant() {
 
   return (
     <div
-      className="relative h-[92vh] flex flex-col justify-between text-white"
+      className="relative h-[91vh] flex flex-col justify-between text-white"
       style={{
         backgroundColor: "#111827",
         border: "1px solid #374151",
