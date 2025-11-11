@@ -3,8 +3,6 @@ import axios from "axios";
 import InputPopup from "../InputPopup";
 import { API_URL } from "../../../config";
 
-const POLL_INTERVAL = 2500; 
-
 const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) => {
   const [output, setOutput] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +20,7 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
       if (data.status.id >= 3) {  
         return data;
       } else {
-        await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+        await new Promise((r) => setTimeout(r, 2500));
         return await pollResult(token);
       }
     } catch (err) {
@@ -81,48 +79,63 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
     }
   };
 
-  return (
-    <div className="relative w-full h-full">
-      {/* Input Popup */}
-      {showRunPopup && (
-        <InputPopup
-          inputValue={inputValue}
-          setInputValue={setInputValue}
-          onSubmit={runCode}
-          onCancel={() => setShowRunPopup(false)}
-        />
-      )}
-
-      {/* Code Output */}
-      <div
-        className="rounded-md h-[85vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-3 text-gray-200"
-        style={{
-          border: `1px solid ${isError ? "#ef4444" : "#333"}`,
-          backgroundColor: "#0f0f0f",
-          transition: "border-color 0.3s ease",
-        }}
+return (
+  <div
+    className="rounded-md h-[91vh] p-3 text-gray-200 flex flex-col"
+    style={{
+      border: `1px solid ${isError ? "#ef4444" : "#333"}`,
+      backgroundColor: "#0f0f0f",
+      transition: "border-color 0.3s ease",
+      overflow: "hidden",
+    }}
+  > 
+    <div className="flex justify-end gap-3 mb-2">
+      <button
+        onClick={() => setShowRunPopup(true)} 
+        className="px-4 py-3 text-sm font-medium rounded-md bg-gray-700 hover:bg-gray-600 text-white transition"
       >
-        <p className="mb-3 text-xl text-gray-500 text-center font-bold">Output</p>
+        Input
+      </button>
 
-        {executionTime && (
-          <span className="flex justify-end text-gray-400 mb-2">
-            Execution time: {executionTime}s
-          </span>
-        )}
-
-        {isLoading ? (
-          <p className="text-center text-gray-400">Running...</p>
-        ) : output ? (
-          output.map((line, i) => <p key={i}>{line}</p>)
-        ) : (
-          <p className="text-center text-gray-500">
-            Click <span className="text-green-400 font-semibold">'Run Code'</span> to execute and
-            view output here.
-          </p>
-        )}
-      </div>
+      <button
+        onClick={() => runCode("")}   
+        className="px-4 py-3 text-sm font-medium rounded-md bg-green-700 hover:bg-green-600 text-white transition"
+      >
+        Run Code
+      </button> 
     </div>
-  );
+
+    {showRunPopup && (
+      <InputPopup
+        inputValue={inputValue}
+        setInputValue={setInputValue}
+        onSubmit={runCode}
+        onCancel={() => setShowRunPopup(false)}
+      />
+    )}
+
+    <p className="mb-3 text-xl text-gray-500 text-center font-bold">Output</p>
+
+    {executionTime && (
+      <span className="flex justify-end text-gray-400 mb-2">
+        Execution time: {executionTime}s
+      </span>
+    )}
+
+    {isLoading ? (
+      <p className="text-center text-gray-400">Running...</p>
+    ) : output ? (
+      output.map((line, i) => <p key={i}>{line}</p>)
+    ) : (
+      <div className="flex flex-1 justify-center items-start mt-12">
+        <p className="text-center text-gray-500">
+          Click <span className="text-green-400 font-semibold">'Run Code'</span> to execute and view output here.
+        </p>
+      </div>
+    )}
+  </div>
+);
+
 };
 
 export default CodeRunner;
