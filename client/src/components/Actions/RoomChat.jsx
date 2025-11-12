@@ -14,7 +14,8 @@ function RoomChat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
  
-  const messagesContainerRef = useRef(null);
+  const messagesContainerRef = useRef(null); 
+  const inputRef = useRef(null);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -72,9 +73,11 @@ function RoomChat() {
     }
   };
 
+  useEffect(() =>  inputRef.current?.focus(), []);
+
   return (
     <div
-      className="relative h-[92vh] flex flex-col justify-between text-white rounded-lg"
+      className="relative h-[91vh] flex flex-col justify-between text-white rounded-lg"
       style={{
         backgroundColor: "#111827",
         border: "1px solid #374151",
@@ -154,6 +157,7 @@ function RoomChat() {
       >
         <textarea 
           value={input} 
+          ref={inputRef}
           onChange={(e) => setInput(e.target.value)} 
           onKeyDown={handleKeyDown}
           placeholder="Type your message..." 
@@ -162,7 +166,7 @@ function RoomChat() {
             backgroundColor: "#374151",
             border: "1px solid #4b5563",
             height: "36px",
-          }}
+          }} 
         /> 
         <button
           type="submit"

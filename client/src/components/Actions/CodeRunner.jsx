@@ -81,10 +81,11 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
 
 return (
   <div
-    className="rounded-md h-[91vh] p-3 text-gray-200 flex flex-col"
+    className="rounded-md h-[91vh] p-3 flex flex-col"
     style={{
       border: `1px solid ${isError ? "#ef4444" : "#333"}`,
       backgroundColor: "#0f0f0f",
+      color: `${isError ? "#ef4444" : "#e5e7eb"}`,
       transition: "border-color 0.3s ease",
       overflow: "hidden",
     }}

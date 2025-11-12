@@ -7,7 +7,9 @@ function CodeAssistant() {
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef(null);
-  const scrollRef = useRef(null);
+  const scrollRef = useRef(null); 
+
+  useEffect(() =>  textareaRef.current?.focus(), []);
  
   useEffect(() => {
     if (scrollRef.current) {
