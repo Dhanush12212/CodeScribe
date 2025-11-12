@@ -7,6 +7,7 @@ import { ChevronDown } from "lucide-react";
 import ActionView from "../pages/ActionView";
 import axios from "axios";
 import { API_URL } from "../../config";
+import AIPromptModal from "./Actions/AIPromptModel";
 
 const THEMES = [
   { label: "Dark", value: "vs-dark" },
@@ -22,23 +23,30 @@ function CodeEditor({ roomId }) {
   const [theme, setTheme] = useState("vs-dark");
   const [themeOpen, setThemeOpen] = useState(false);
   const [isDebugging, setIsDebugging] = useState(false);
+  const [promptShow, setPromptShow] = useState(false);
+  const [AIPrompt, setAIPrompt] = useState("");
+  const [fontSize, setFontSize] = useState(() => {
+    if (window.innerWidth >= 1024) return 16;
+    if (window.innerWidth >= 768) return 14;
+    return 12;
+  });
 
   const editorRef = useRef(null);
   const themeRef = useRef(null);
   const senderId = useRef(Date.now() + Math.random());
   const latestCodeRef = useRef("");
-  const isRemoteUpdate = useRef(false);  
- 
+  const isRemoteUpdate = useRef(false);
+
+  // Debug Function 
   const handleDebug = async () => {
     const currentCode = editorRef.current?.getValue();
     if (!currentCode?.trim()) return alert("No code to debug!");
     setIsDebugging(true);
 
     try {
-      const response = await axios.post(`${API_URL}/codeAssistant/debug`, {
-        code: currentCode,
-        language,
-        },
+      const response = await axios.post(
+        `${API_URL}/codeAssistant/debug`,
+        { code: currentCode, language },
         { withCredentials: true }
       );
 
@@ -55,19 +63,19 @@ function CodeEditor({ roomId }) {
       setIsDebugging(false);
     }
   };
- 
+
+  // Socket Setup 
   useEffect(() => {
     if (!roomId) return;
-
     if (!socket.connected) socket.connect();
- 
+
     socket.once("connect", () => {
       console.log("Socket connected:", socket.id);
       socket.emit("joinRoom", roomId);
     });
 
     const localSenderId = senderId.current;
- 
+
     socket.on("languageChange", ({ roomId: updatedRoomId, language }) => {
       if (updatedRoomId === roomId) {
         setLanguage(language);
@@ -75,8 +83,8 @@ function CodeEditor({ roomId }) {
         editorRef.current?.setValue(newCode);
         latestCodeRef.current = newCode;
       }
-    });
- 
+    },[]);
+
     socket.on("updatedCode", ({ roomId: updatedRoomId, code, senderId: remoteId }) => {
       if (
         updatedRoomId === roomId &&
@@ -84,25 +92,47 @@ function CodeEditor({ roomId }) {
         code !== latestCodeRef.current
       ) {
         const editor = editorRef.current;
-        if (!editor) return; 
+        if (!editor) return;
         const cursor = editor.getPosition();
-        isRemoteUpdate.current = true;   
+        isRemoteUpdate.current = true;
         latestCodeRef.current = code;
-        editor.setValue(code);
-        if (cursor) editor.setPosition(cursor); 
+        const model = editor.getModel();
+        if (model) {
+          const oldCode = model.getValue();
+          if (oldCode !== code) {
+            const oldLines = oldCode.split("\n");
+            const newLines = code.split("\n");
+            const edits = [];
+            const lineCount = Math.max(oldLines.length, newLines.length);
+            for (let i = 0; i < lineCount; i++) {
+              if (oldLines[i] !== newLines[i]) {
+                edits.push({
+                  range: new window.monaco.Range(i + 1, 1, i + 1, oldLines[i]?.length + 1 || 1),
+                  text: newLines[i] ?? "",
+                });
+              }
+            }
+            if (edits.length > 0) {
+              editor.executeEdits("remote-update", edits);
+            }
+            // format for other users to keep structure identical
+            editor.getAction("editor.action.formatDocument").run();
+          }
+        }
+        if (cursor) editor.setPosition(cursor);
         setTimeout(() => {
           isRemoteUpdate.current = false;
-        }, 50);
+        }, 100);
       }
     });
 
     return () => {
       socket.off("languageChange");
-      socket.off("updatedCode"); 
+      socket.off("updatedCode");
     };
   }, [roomId]);
 
- 
+  // Editor Change Handler 
   const handleOnChange = useCallback(
     (newCode) => {
       if (!newCode || isRemoteUpdate.current) return;
@@ -114,9 +144,9 @@ function CodeEditor({ roomId }) {
       });
     },
     [roomId]
-  ); 
-  
+  );
 
+  // Language & Theme 
   const onSelectLanguage = (selectedLanguage, id) => {
     setLanguage(selectedLanguage);
     setLanguageId(id);
@@ -124,12 +154,25 @@ function CodeEditor({ roomId }) {
     editorRef.current?.setValue(newCode);
     socket.emit("languageChange", { roomId, selectedLanguage });
   };
- 
+
   const onSelectTheme = (selectedTheme) => {
     setTheme(selectedTheme);
     setThemeOpen(false);
   };
- 
+
+  // Resize Handler 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setFontSize(16);
+      else if (window.innerWidth >= 768) setFontSize(14);
+      else setFontSize(12);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Editor Mount 
   const onMount = (editor) => {
     editorRef.current = editor;
     editor.focus();
@@ -137,7 +180,8 @@ function CodeEditor({ roomId }) {
     editor.setValue(initialCode);
     latestCodeRef.current = initialCode;
   };
- 
+
+  //  Theme Dropdown Close 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (themeRef.current && !themeRef.current.contains(event.target)) {
@@ -148,12 +192,73 @@ function CodeEditor({ roomId }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Keyboard Shortcut 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.shiftKey && e.ctrlKey && e.key === "S") {
+        e.preventDefault();
+        setPromptShow(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // AI Code Edit 
+  const handleAICodeEdit = async () => {
+    setPromptShow(false);
+
+    try {
+      const editor = editorRef.current;
+      if (!editor) return alert("Editor not initialized yet.");
+      const currentCode = editor.getValue();
+      if (!currentCode?.trim()) return alert("No code found in editor.");
+
+      const res = await axios.post(
+        `${API_URL}/codeAssistant/AIPrompt`,
+        { prompt: AIPrompt, code: currentCode },
+        { withCredentials: true }
+      );
+
+      const updatedCode = res?.data?.updatedCode ?? currentCode;
+      console.log("AI Code Received:", updatedCode?.slice(0, 100));
+ 
+      isRemoteUpdate.current = true;
+
+      // Safely update the Monaco model
+      const model = editor.getModel();
+      if (model) {
+        model.setValue(updatedCode);
+        editor.getAction("editor.action.formatDocument").run();
+      } else editor.setValue(updatedCode);
+
+      latestCodeRef.current = updatedCode;
+
+      // Broadcast the change to others
+      socket.emit("updatedCode", {
+        roomId,
+        code: updatedCode,
+        senderId: senderId.current,
+      });
+
+      setTimeout(() => {
+        isRemoteUpdate.current = false;
+      }, 100);
+
+      console.log("AI Updated Code Applied Successfully!");
+    } catch (error) {
+      console.error("AI Code Update Error:", error.message);
+      alert("AI Code update failed. Please try again.");
+    }
+  };
+ 
   return (
-    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300">
+    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300">  
       <div className="w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         <div className="flex gap-4 mb-2 items-center p-2">
           <LanguageSelector language={language} onSelect={onSelectLanguage} />
 
+          {/* Theme Selector */}
           <div ref={themeRef} className="relative inline-block text-left">
             <button
               onClick={() => setThemeOpen(!themeOpen)}
@@ -185,6 +290,7 @@ function CodeEditor({ roomId }) {
             )}
           </div>
 
+          {/* Debug Button */}
           <button
             onClick={handleDebug}
             disabled={isDebugging}
@@ -199,7 +305,12 @@ function CodeEditor({ roomId }) {
         </div>
 
         <Editor
-          options={{ minimap: { enabled: false } }}
+          options={{
+            minimap: { enabled: false },
+            wordWrap: "on",
+            fontSize: fontSize,
+            scrollBeyondLastLine: false,
+          }}
           height="100%"
           theme={theme}
           language={language}
@@ -207,11 +318,20 @@ function CodeEditor({ roomId }) {
           onChange={handleOnChange}
         />
       </div>
-
+ 
       <div className="w-full custom-xl:w-1/2 h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         <ActionView editorRef={editorRef} language={language} languageId={languageId} />
       </div>
-
+ 
+      {promptShow && (
+        <AIPromptModal
+          AIPrompt={AIPrompt}
+          setAIPrompt={setAIPrompt}
+          onCancel={() => setPromptShow(false)}
+          onSubmit={handleAICodeEdit}
+        />
+      )}
+ 
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-4px); }
