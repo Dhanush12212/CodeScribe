@@ -25,9 +25,16 @@ export default function initSocket(httpServer) {
       const { code, language } = rooms.get(roomId);
       // console.log(`[Server] ${socket.id} joined room ${roomId}`);
 
+      const totalUsers = io.sockets.adapter.rooms.get(roomId)?.size || 0; 
+      io.to(roomId).emit("roomMembers", totalUsers);
+      
       socket.emit("roomJoined", { roomId });
       socket.emit("updatedCode", { roomId, code, senderId: "server" });
       socket.emit("languageChange", { roomId, language });
+
+      //Send Chat History when user joined
+      const chatHistory = roomMessages.get(roomId) || [];
+      socket.emit("chatHistory", chatHistory);
     });
 
     socket.on("languageChange", ({ roomId, selectedLanguage }) => {
@@ -60,32 +67,36 @@ export default function initSocket(httpServer) {
         text,
         timestamp: new Date(),
       };
+      console.log("Received Message", message.text);
 
       //Save to memory
       roomMessages.get(roomId).push(message);
-
+      
       //BroadCast to all in room
       io.to(roomId).emit('receiveMessage', message); 
     });
 
-    //Send Chat History when user joined
-    const chatHistory = roomMessages.get(roomId) || [];
-    socket.emit("chatHistory", chatHistory);
 
-    //Clean Chats when user disconnects
-    socket.on('disconnecting', () => {
+    //Clean Chats when user disconnects 
+    socket.on("disconnecting", () => {
       socket.rooms.forEach((roomId) => {
-        if(roomId != socket.id) {
+        if (roomId !== socket.id) {
           const room = io.sockets.adapter.rooms.get(roomId);
-          const userCount = room ? room.size -1 : 0;
 
-          if(userCount <= 0) {
-            console.log("Deleted Chats"); 
+          // Calculate remaining users
+          const totalUsers = room ? room.size - 1 : 0;
+         
+          io.to(roomId).emit("roomMembers", totalUsers);
+
+          // Cleanup chat history if room is empty
+          if (totalUsers <= 0) {
+            console.log(`Room ${roomId} is empty. Deleting chats...`);
             roomMessages.delete(roomId);
           }
         }
       });
     });
+
 
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.id}`);
