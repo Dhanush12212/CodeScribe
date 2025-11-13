@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as dotenv from "dotenv";
 dotenv.config();
+import ApiError from "../utils/ApiError.utils.js";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
@@ -9,7 +10,8 @@ const GEMINI_API_URL = process.env.GEMINI_API_URL;
 const AskAI = async (req, res) => {
   try {
     const { prompt } = req.body;
-    if (!prompt) return res.status(400).json({ error: "Prompt is required." });
+    if (!prompt) 
+      throw new ApiError(400, "Prompt is required"); 
 
     const body = {
       contents: [
@@ -71,16 +73,18 @@ const AskAI = async (req, res) => {
 
     return res.status(200).json({ explanation, code });
   } catch (error) {
-    console.error("❌ AskAI Error:", error?.response?.data || error.message);
-    return res.status(500).json({ error: "Gemini request failed.", details: error.message });
+    console.error("AskAI Error:", error?.response?.data || error.message);
+    throw new ApiError(500, "Gemini request failed.");
   }
 };
- 
+
 
 const DebugAI = async (req, res) => {
   try {
     const { code, language } = req.body;
-    if (!code) return res.status(400).json({ error: "Code is required." });
+
+    if (!code) 
+      throw new ApiError(400, "Code is required" );
 
     const body = {
       contents: [
@@ -133,9 +137,57 @@ const DebugAI = async (req, res) => {
     debuggedCode = debuggedCode.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim();
     return res.status(200).json({ debuggedCode });
   } catch (error) {
-    console.error("❌ DebugAI Error:", error?.response?.data || error.message);
-    return res.status(500).json({ error: "Gemini debugging failed.", details: error.message });
+    console.error("DebugAI Error:", error?.response?.data || error.message);
+    throw new ApiError(500, "Gemini debugging failed"); 
+  }
+};
+  
+// api/v1/codeAssistant/AIPrompt
+const AIPrompt = async (req, res) => {
+  try {
+    const { prompt, code } = req.body;
+
+    if (!prompt) throw new ApiError(400, "Prompt is required");
+
+    const fullPrompt = `
+      You are an AI code assistant. Modify the given code based on the user's request.
+      Ensure clean, correct, and readable output.
+      Return ONLY the updated code. Do not include explanations, comments or markdown.
+      Add a one line comment for what is added or updated.
+      
+      User Request:
+      ${prompt}
+
+      Original Code:
+      ${code}
+    `;
+
+    const response = await axios.post(
+      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [{ text: fullPrompt }],
+          },
+        ],
+      },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const textOutput =
+      response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+ 
+    let cleanedCode =
+      textOutput.match(/```[a-z]*\n?([\s\S]*?)```/i)?.[1]?.trim()
+      || textOutput.trim();
+
+    return res.status(200).json({ updatedCode: cleanedCode });
+
+  } catch (error) {
+    console.error("Gemini Code Update Error:", error?.response?.data || error.message);
+    return res.status(500).json({ error: "Failed to update code using AI" });
   }
 };
 
-export { AskAI, DebugAI };
+
+export { AskAI, DebugAI, AIPrompt };
