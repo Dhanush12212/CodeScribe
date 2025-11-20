@@ -37,15 +37,17 @@ export default function initSocket(httpServer) {
       socket.emit("chatHistory", chatHistory);
     });
 
-    socket.on("languageChange", ({ roomId, selectedLanguage }) => {
-      if (!rooms.has(roomId)) return;
+socket.on("languageChange", ({ roomId, language }) => {
+  if (!rooms.has(roomId)) return;
 
-      rooms.get(roomId).language = selectedLanguage;
-      io.to(roomId).emit("languageChange", {
-        roomId,
-        language: selectedLanguage,
-      });
-    });
+  rooms.get(roomId).language = language;
+
+  io.to(roomId).emit("languageChange", {
+    roomId,
+    language,
+  });
+});
+
 
     socket.on("updatedCode", ({ roomId, code, senderId }) => {
       if (!rooms.has(roomId)) return;

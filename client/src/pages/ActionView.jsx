@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import CodeRunner from "../components/Actions/CodeRunner";
 import CodeAssisstant from "../components/Actions/CodeAssisstant";
 import RoomChat from "../components/Actions/RoomChat";
-import RelatedPrograms from "../components/Actions/RelatedPrograms";
+import CodeReview from "../components/Actions/CodeReview";
 import ActionButtons from "../components/Actions/ActionButtons";
 import { LANGUAGE_IDS } from '../constants'; 
 
-const ActionView = ({ editorRef, language }) => {
+const ActionView = ({ editorRef, language, languageId }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
   const [showInfo, setShowInfo] = useState(false);
   const [showRunPopup, setShowRunPopup] = useState(false);
@@ -15,8 +15,6 @@ const ActionView = ({ editorRef, language }) => {
     setActiveComponent("CodeRunner");
     setShowRunPopup(true);
   };
- 
-  const languageId = LANGUAGE_IDS[language];  
 
   const renderComponent = () => {
     switch (activeComponent) {
@@ -36,8 +34,10 @@ const ActionView = ({ editorRef, language }) => {
       case "Room Chat":
         return <RoomChat />;
 
-      case "Related Programs":
-        return <RelatedPrograms />;
+      case "Code Review":
+        return <CodeReview 
+        editorRef={editorRef}
+        />;
 
       default:
         return null;

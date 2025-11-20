@@ -1,21 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Editor } from "@monaco-editor/react";
 import LanguageSelector from "./LanguageSelector";
-import { CODE_SNIPPETS, LANGUAGE_IDS } from "../constants";
+import { CODE_SNIPPETS, LANGUAGE_IDS, THEMES } from "../constants";
 import { socket } from "../socket/socket";
 import { ChevronDown } from "lucide-react";
 import ActionView from "../pages/ActionView";
 import axios from "axios";
 import { API_URL } from "../../config";
 import AIPromptModal from "./Actions/AIPromptModel";
-
-const THEMES = [
-  { label: "Dark", value: "vs-dark" },
-  { label: "Light", value: "light" },
-  { label: "High Contrast Dark", value: "hc-black" },
-  { label: "High Contrast Light", value: "hc-light" },
-  { label: "Monokai", value: "monokai" },
-];
 
 function CodeEditor({ roomId }) {
   const [language, setLanguage] = useState("java");
@@ -26,7 +18,7 @@ function CodeEditor({ roomId }) {
   const [promptShow, setPromptShow] = useState(false);
   const [AIPrompt, setAIPrompt] = useState("");
   const [fontSize, setFontSize] = useState(() => {
-    if (window.innerWidth >= 1024) return 16;
+    if (window.innerWidth >= 1024) return 15;
     if (window.innerWidth >= 768) return 14;
     return 12;
   });
@@ -37,10 +29,7 @@ function CodeEditor({ roomId }) {
   const senderId = useRef(Date.now() + Math.random());
   const latestCodeRef = useRef("");
   const isRemoteUpdate = useRef(false);
-
-  // ----------------------
-  // Helper: Apply flexible line-by-line diffs
-  // ----------------------
+ 
   const applyLineByLineUpdate = (editor, monaco, newCode) => {
     if (!editor || !monaco) return;
     const model = editor.getModel();
@@ -54,8 +43,7 @@ function CodeEditor({ roomId }) {
     const edits = [];
 
     const maxLines = Math.max(oldLines.length, newLines.length);
-
-    // Build edits in contiguous chunks where lines differ — this is more resilient
+ 
     let i = 0;
     while (i < maxLines) {
       const oldLine = oldLines[i] ?? null;
@@ -65,8 +53,7 @@ function CodeEditor({ roomId }) {
         i++;
         continue;
       }
-
-      // start of difference chunk
+ 
       let j = i + 1;
       while (j < maxLines) {
         const o = oldLines[j] ?? null;
@@ -74,22 +61,18 @@ function CodeEditor({ roomId }) {
         if (o === n) break;
         j++;
       }
-
-      // compute range to replace in editor (lines i .. j-1)
+ 
       const startLineNumber = i + 1;
-
-      // determine endLineNumber & endColumn (if line exists in oldLines)
+ 
       let endLineNumber = Math.min(j, oldLines.length);
       let endColumn = 1;
       if (endLineNumber > 0 && endLineNumber <= oldLines.length) {
         endColumn = oldLines[endLineNumber - 1]?.length + 1 || 1;
-      } else {
-        // insertion at end — place end at startLineNumber
+      } else { 
         endLineNumber = startLineNumber;
         endColumn = 1;
       }
-
-      // text to insert
+ 
       const replacementText = newLines.slice(i, j).join("\n");
 
       edits.push({
@@ -104,10 +87,7 @@ function CodeEditor({ roomId }) {
       editor.executeEdits("remote-update", edits);
     }
   };
-
-  // ----------------------
-  // Debug Function
-  // ----------------------
+ 
   const handleDebug = async () => {
     const currentCode = editorRef.current?.getValue();
     if (!currentCode?.trim()) return alert("No code to debug!");
@@ -121,8 +101,7 @@ function CodeEditor({ roomId }) {
       );
 
       const { debuggedCode } = response.data;
-      if (response.status === 200 && debuggedCode) {
-        // Apply line-by-line update from AI
+      if (response.status === 200 && debuggedCode) { 
         isRemoteUpdate.current = true;
         applyLineByLineUpdate(editorRef.current, monacoRef.current, debuggedCode);
         latestCodeRef.current = debuggedCode;
@@ -137,10 +116,7 @@ function CodeEditor({ roomId }) {
       setIsDebugging(false);
     }
   };
-
-  // ----------------------
-  // Socket Setup
-  // ----------------------
+ 
   useEffect(() => {
     if (!roomId) return;
     if (!socket.connected) socket.connect();
@@ -151,11 +127,11 @@ function CodeEditor({ roomId }) {
     });
 
     const localSenderId = senderId.current;
-
-    // Language change from remote
+ 
     socket.on("languageChange", ({ roomId: updatedRoomId, language: newLang }) => {
       if (updatedRoomId === roomId) {
         setLanguage(newLang);
+        setLanguageId(LANGUAGE_IDS[newLang]);
         const newCode = CODE_SNIPPETS[newLang];
         if (editorRef.current) {
           isRemoteUpdate.current = true;
@@ -165,27 +141,22 @@ function CodeEditor({ roomId }) {
         }
       }
     });
-
-    // Updated code from remote
+ 
     socket.on("updatedCode", ({ roomId: updatedRoomId, code, senderId: remoteId }) => {
       if (updatedRoomId === roomId && remoteId !== localSenderId && code !== latestCodeRef.current) {
         const editor = editorRef.current;
         const monaco = monacoRef.current;
         if (!editor || !monaco) return;
-
-        // preserve cursor
+ 
         const cursor = editor.getPosition();
         isRemoteUpdate.current = true;
         latestCodeRef.current = code;
-
-        // apply flexible line-by-line update
+ 
         applyLineByLineUpdate(editor, monaco, code);
-
-        // format to keep structure similar for everyone
+ 
         try {
           editor.getAction("editor.action.formatDocument").run();
-        } catch (e) {
-          // formatting might fail for unsupported languages or if formatter is not available
+        } catch (e) { 
         }
 
         if (cursor) editor.setPosition(cursor);
@@ -198,10 +169,7 @@ function CodeEditor({ roomId }) {
       socket.off("updatedCode");
     };
   }, [roomId]);
-
-  // ----------------------
-  // Editor Change Handler
-  // ----------------------
+ 
   const handleOnChange = useCallback(
     (newCode) => {
       if (!newCode || isRemoteUpdate.current) return;
@@ -214,10 +182,7 @@ function CodeEditor({ roomId }) {
     },
     [roomId]
   );
-
-  // ----------------------
-  // Language & Theme
-  // ----------------------
+ 
   const onSelectLanguage = (selectedLanguage, id) => {
     setLanguage(selectedLanguage);
     setLanguageId(id);
@@ -228,8 +193,7 @@ function CodeEditor({ roomId }) {
       latestCodeRef.current = newCode;
       setTimeout(() => (isRemoteUpdate.current = false), 100);
     }
-
-    // emit structured payload that the backend/other clients can understand
+ 
     socket.emit("languageChange", { roomId, language: selectedLanguage, senderId: senderId.current });
   };
 
@@ -237,10 +201,7 @@ function CodeEditor({ roomId }) {
     setTheme(selectedTheme);
     setThemeOpen(false);
   };
-
-  // ----------------------
-  // Resize Handler
-  // ----------------------
+ 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setFontSize(16);
@@ -251,10 +212,7 @@ function CodeEditor({ roomId }) {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // ----------------------
-  // Editor Mount
-  // ----------------------
+ 
   const onMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -263,10 +221,7 @@ function CodeEditor({ roomId }) {
     editor.setValue(initialCode);
     latestCodeRef.current = initialCode;
   };
-
-  // ----------------------
-  // Theme Dropdown Close
-  // ----------------------
+ 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (themeRef.current && !themeRef.current.contains(event.target)) {
@@ -276,10 +231,7 @@ function CodeEditor({ roomId }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // ----------------------
-  // Keyboard Shortcut
-  // ----------------------
+ 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.shiftKey && e.ctrlKey && (e.key === "S" || e.key === "s")) {
@@ -290,10 +242,7 @@ function CodeEditor({ roomId }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  // ----------------------
-  // AI Code Edit
-  // ----------------------
+ 
   const handleAICodeEdit = async () => {
     setPromptShow(false);
 
@@ -314,19 +263,16 @@ function CodeEditor({ roomId }) {
       console.log("AI Code Received:", updatedCode?.slice(0, 100));
 
       isRemoteUpdate.current = true;
-
-      // Safely apply flexible line-by-line updates
+ 
       applyLineByLineUpdate(editor, monaco, updatedCode);
 
       try {
         editor.getAction("editor.action.formatDocument").run();
-      } catch (e) {
-        // ignore formatting errors
+      } catch (e) { 
       }
 
       latestCodeRef.current = updatedCode;
-
-      // Broadcast the change to others
+ 
       socket.emit("updatedCode", {
         roomId,
         code: updatedCode,

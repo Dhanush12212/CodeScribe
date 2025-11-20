@@ -3,6 +3,8 @@ import { LANGUAGE_IDS } from '../constants';
 import { ChevronDownIcon } from 'lucide-react';
 
 const languages = Object.keys(LANGUAGE_IDS);
+console.log(languages);
+
 
 function LanguageSelector({ language, onSelect }) {
   const [open, setOpen] = useState(false);
