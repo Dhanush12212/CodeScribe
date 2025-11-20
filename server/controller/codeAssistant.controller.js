@@ -193,9 +193,9 @@ const reviewCode = async (req, res) => {
   const { code } = req.body;
 
   const prompt = `
-    You are a senior software engineer.
+    You are an AI code assistant.
 
-    Return ONLY valid JSON with the following fields:
+    Return ONLY valid JSON with:
     {
       "time_complexity": "",
       "space_complexity": "",
@@ -204,8 +204,13 @@ const reviewCode = async (req, res) => {
       "reasoning": ""
     }
 
-    Do NOT include backticks.
-    Do NOT include explanations.
+    Rules:
+    - Escape all double quotes inside optimized_code using \\".
+    - No trailing commas.
+    - No backticks.
+    - No markdown formatting.
+    - Only return pure JSON.
+    - For reasoning: clean structure, proper spacing, numbered points (1., 2., 3.) must remain on same line.
 
     Code to review:
     ${code}
@@ -214,51 +219,92 @@ const reviewCode = async (req, res) => {
   try {
     const response = await axios.post(
       `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-      {
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-      }
+      { contents: [{ parts: [{ text: prompt }] }] }
     );
 
     let text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "";
- 
-    text = text
-      .replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim();
+
+    // Remove fences
+    text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+    // Remove trailing commas
+    text = text.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
+
+    // Handle optimized code extraction
+    const codeMatch = text.match(/"optimized_code"\s*:\s*"(.*?)"(?=\s*[},])/s);
+
+    if (codeMatch) {
+      const raw = codeMatch[1];
+
+      const escaped = raw
+        .replace(/\\/g, "\\\\")
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, "\\n")
+        .replace(/\t/g, "\\t");
+
+      text = text.replace(
+        /"optimized_code"\s*:\s*"(.*?)"(?=\s*[},])/s,
+        `"optimized_code":"${escaped}"`
+      );
+    }
 
     let json;
-
     try {
       json = JSON.parse(text);
     } catch (err) {
       console.error("JSON Parse Failed. Raw text:", text);
-      return res.status(500).json({
-        error: "Invalid JSON returned from AI",
-      });
+      return res.status(500).json({ error: "Invalid JSON returned from AI" });
     }
- 
+
+    // Restore optimized code formatting
+    let cleanOptimized = json.optimized_code || "";
+    cleanOptimized = cleanOptimized
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "    ")
+      .replace(/\\"/g, '"')
+      .trim();
+
+    // Reasoning formatting
+    let cleanReasoning = json.reasoning || "";
+
+    cleanReasoning = cleanReasoning
+      .replace(/\*\*/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+    // Fix bullet lines like "1.\nNext sentence"
+    cleanReasoning = cleanReasoning.replace(/(\d\.)\s*\n\s*/g, "$1 ");
+
+    // Split sentences clean
+    let reasoningLines = cleanReasoning
+      .split(/(?<=\.)\s+/g)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    cleanReasoning = reasoningLines.join(" ");
+
+    // Final object
     const formatted = {
       time_complexity: json.time_complexity || "Not provided",
       space_complexity: json.space_complexity || "Not provided",
+      optimized_code: cleanOptimized,
+      reasoning: cleanReasoning,
       best_practices: Array.isArray(json.best_practices)
         ? json.best_practices
         : typeof json.best_practices === "string"
-        ? json.best_practices.split("\n").map((v) => v.trim()).filter(Boolean)
+        ? json.best_practices.split("\n").map((s) => s.trim()).filter(Boolean)
         : [],
-      optimized_code: json.optimized_code || "",
-      reasoning: json.reasoning || "",
     };
 
     return res.json(formatted);
+
   } catch (error) {
     console.error("Gemini Error:", error.response?.data || error.message);
     return res.status(500).json({ error: "Code review failed" });
   }
 };
+
+
 
 
 export { AskAI, DebugAI, AIPrompt, reviewCode };
