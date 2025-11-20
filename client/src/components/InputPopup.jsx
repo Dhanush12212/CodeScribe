@@ -48,7 +48,7 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="px-5 py-2 rounded-lg text-white transition-colors duration-200 shadow-md font-medium"
+            className="px-5 py-2 rounded-lg text-white transition-colors duration-200 shadow-md font-medium cursor-pointer"
             style={{
               backgroundColor: "#374151", 
               border: "1px solid #4b5563",
@@ -61,7 +61,7 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
 
           <button
             onClick={handleSubmit}
-            className="px-5 py-2 rounded-lg text-white transition-all duration-200 shadow-md font-medium"
+            className="px-5 py-2 rounded-lg text-white transition-all duration-200 shadow-md font-medium cursor-pointer"
             style={{
               background: "linear-gradient(to right, #15803d, #166534)",
               border: "1px solid #16a34a",

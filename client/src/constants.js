@@ -28,3 +28,11 @@ export const CODE_SNIPPETS = {
   php: "<?php\n\n$run = 'Start with PHP';\necho $run;\n",
   C: `#include <stdio.h>\n\nint main() {\n\tprintf("Start with C!");\n\treturn 0;\n}\n`, 
 };
+
+export const THEMES = [
+  { label: "Dark", value: "vs-dark" },
+  { label: "Light", value: "light" },
+  { label: "High Contrast Dark", value: "hc-black" },
+  { label: "High Contrast Light", value: "hc-light" },
+  { label: "Monokai", value: "monokai" },
+];

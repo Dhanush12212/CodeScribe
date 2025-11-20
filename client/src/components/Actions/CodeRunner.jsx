@@ -33,11 +33,10 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
   const runCode = async (userInput) => {
     if (!editorRef.current) return;
     const sourceCode = editorRef.current.getValue();
-    if (!sourceCode) return;
-    
+    if (!sourceCode) return;    
     try {
       setIsLoading(true);
-      setInputValue(userInput);
+      setInputValue(userInput);  
       
       const runResponse = await axios.post( `${API_URL}/execute/runCode`,
         {
@@ -93,14 +92,14 @@ return (
     <div className="flex justify-end gap-3 mb-2">
       <button
         onClick={() => setShowRunPopup(true)} 
-        className="px-4 py-3 text-sm font-medium rounded-md bg-gray-700 hover:bg-gray-600 text-white transition"
+        className="px-4 py-3 text-sm font-medium rounded-md bg-gray-700 hover:bg-gray-600 text-white transition cursor-pointer"
       >
         Input
       </button>
 
       <button
         onClick={() => runCode("")}   
-        className="px-4 py-3 text-sm font-medium rounded-md bg-green-700 hover:bg-green-600 text-white transition"
+        className="px-4 py-3 text-sm font-medium rounded-md bg-green-700 hover:bg-green-600 text-white transition cursor-pointer"
       >
         Run Code
       </button> 
