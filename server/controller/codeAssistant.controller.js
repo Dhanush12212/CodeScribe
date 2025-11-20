@@ -189,6 +189,7 @@ const AIPrompt = async (req, res) => {
   }
 }; 
 
+// api/v1/codeAssistant/reviewCode
 const reviewCode = async (req, res) => {
   const { code } = req.body;
 
@@ -210,7 +211,7 @@ const reviewCode = async (req, res) => {
     - No backticks.
     - No markdown formatting.
     - Only return pure JSON.
-    - For reasoning: clean structure, proper spacing, numbered points (1., 2., 3.) must remain on same line.
+    - For reasoning: Strictly give the response in the bullet points similar to the best practices.
 
     Code to review:
     ${code}
@@ -224,13 +225,10 @@ const reviewCode = async (req, res) => {
 
     let text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Remove fences
     text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-    // Remove trailing commas
     text = text.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
 
-    // Handle optimized code extraction
     const codeMatch = text.match(/"optimized_code"\s*:\s*"(.*?)"(?=\s*[},])/s);
 
     if (codeMatch) {
@@ -256,7 +254,6 @@ const reviewCode = async (req, res) => {
       return res.status(500).json({ error: "Invalid JSON returned from AI" });
     }
 
-    // Restore optimized code formatting
     let cleanOptimized = json.optimized_code || "";
     cleanOptimized = cleanOptimized
       .replace(/\\n/g, "\n")
@@ -264,31 +261,22 @@ const reviewCode = async (req, res) => {
       .replace(/\\"/g, '"')
       .trim();
 
-    // Reasoning formatting
     let cleanReasoning = json.reasoning || "";
 
     cleanReasoning = cleanReasoning
-      .replace(/\*\*/g, "")
-      .replace(/\s{2,}/g, " ")
-      .trim();
+      .replace(/\n/g, " ")           
+      .split("*")                   
+      .map((item) => item.trim())     
+      .filter(Boolean)               
+      .map((item) => `• ${item}`);    
 
-    // Fix bullet lines like "1.\nNext sentence"
-    cleanReasoning = cleanReasoning.replace(/(\d\.)\s*\n\s*/g, "$1 ");
 
-    // Split sentences clean
-    let reasoningLines = cleanReasoning
-      .split(/(?<=\.)\s+/g)
-      .map((line) => line.trim())
-      .filter(Boolean);
 
-    cleanReasoning = reasoningLines.join(" ");
-
-    // Final object
     const formatted = {
       time_complexity: json.time_complexity || "Not provided",
       space_complexity: json.space_complexity || "Not provided",
       optimized_code: cleanOptimized,
-      reasoning: cleanReasoning,
+      reasoning: cleanReasoning,  
       best_practices: Array.isArray(json.best_practices)
         ? json.best_practices
         : typeof json.best_practices === "string"
@@ -304,7 +292,5 @@ const reviewCode = async (req, res) => {
   }
 };
 
-
-
-
+ 
 export { AskAI, DebugAI, AIPrompt, reviewCode };
