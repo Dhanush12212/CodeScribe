@@ -181,13 +181,84 @@ const AIPrompt = async (req, res) => {
       textOutput.match(/```[a-z]*\n?([\s\S]*?)```/i)?.[1]?.trim()
       || textOutput.trim();
 
-    return res.status(200).json({ updatedCode: cleanedCode });
-
+      return res.status(200).json({ updatedCode: cleanedCode });
+      
   } catch (error) {
     console.error("Gemini Code Update Error:", error?.response?.data || error.message);
     return res.status(500).json({ error: "Failed to update code using AI" });
   }
+}; 
+
+const reviewCode = async (req, res) => {
+  const { code } = req.body;
+
+  const prompt = `
+    You are a senior software engineer.
+
+    Return ONLY valid JSON with the following fields:
+    {
+      "time_complexity": "",
+      "space_complexity": "",
+      "best_practices": [],
+      "optimized_code": "",
+      "reasoning": ""
+    }
+
+    Do NOT include backticks.
+    Do NOT include explanations.
+
+    Code to review:
+    ${code}
+    `;
+
+  try {
+    const response = await axios.post(
+      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+      }
+    );
+
+    let text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+ 
+    text = text
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
+
+    let json;
+
+    try {
+      json = JSON.parse(text);
+    } catch (err) {
+      console.error("JSON Parse Failed. Raw text:", text);
+      return res.status(500).json({
+        error: "Invalid JSON returned from AI",
+      });
+    }
+ 
+    const formatted = {
+      time_complexity: json.time_complexity || "Not provided",
+      space_complexity: json.space_complexity || "Not provided",
+      best_practices: Array.isArray(json.best_practices)
+        ? json.best_practices
+        : typeof json.best_practices === "string"
+        ? json.best_practices.split("\n").map((v) => v.trim()).filter(Boolean)
+        : [],
+      optimized_code: json.optimized_code || "",
+      reasoning: json.reasoning || "",
+    };
+
+    return res.json(formatted);
+  } catch (error) {
+    console.error("Gemini Error:", error.response?.data || error.message);
+    return res.status(500).json({ error: "Code review failed" });
+  }
 };
 
 
-export { AskAI, DebugAI, AIPrompt };
+export { AskAI, DebugAI, AIPrompt, reviewCode };
