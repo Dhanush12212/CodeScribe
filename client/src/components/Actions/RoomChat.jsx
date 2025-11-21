@@ -1,15 +1,22 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { socket } from "../../socket/socket";
+import { Session, Local } from "../../utils/storage";
+import { useAuth } from "../Contexts/AuthContext";
 
 function RoomChat() {
-  const [username, setUsername] = useState(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    return user?.username || "Anonymous";
+
+  const { user } = useAuth(); 
+  const username = user?.username || "Anonymous";
+
+  const [roomId] = useState(() => {
+    return Local.get('roomId') || "";
+  });
+  
+  const [messages, setMessages] = useState(() => {
+    return Session.get(`messages-${roomId}`) || [] ;
   });
 
-  const [roomId] = useState(() => localStorage.getItem("roomId") || "");
-  const [messages, setMessages] = useState([]);
   const [onlineCount, setOnlineCount] = useState(0);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -25,12 +32,22 @@ function RoomChat() {
   };
 
   useEffect(() => {
+    Session.set(`messages-${roomId}`, messages);
+  }, [messages, roomId]);
+
+
+  useEffect(() => {
     if (!roomId) return;
 
     socket.emit("joinRoom", roomId);
 
     socket.on("chatHistory", (history) => {
-      setMessages(history);
+      const existing = Session.get(`messages-${roomId}`);
+
+      if (!existing || existing.length === 0) {
+        setMessages(history);
+      }
+    
       scrollToBottom();
     });
 
@@ -73,7 +90,13 @@ function RoomChat() {
     }
   };
 
-  useEffect(() =>  inputRef.current?.focus(), []);
+  useEffect(() => {
+  if (inputRef.current) {
+    inputRef.current.style.height = "36px"; 
+    inputRef.current.style.height = inputRef.current.scrollHeight + "px";
+  }
+}, [input]);
+ 
 
   return (
     <div
@@ -114,7 +137,7 @@ function RoomChat() {
               }`}
             >
               <div
-                className={`rounded-2xl py-1 px-4 min-w-[100px] text-sm shadow-md max-w-[75%] transition-all duration-300 ${
+                className={`rounded-2xl py-1 px-4 min-w-[100px] text-sm shadow-md  transition-all duration-300 ${
                   msg.sender === username
                     ? "bg-blue-700 text-white"
                     : "bg-gray-800 text-gray-100"
@@ -165,7 +188,7 @@ function RoomChat() {
           style={{
             backgroundColor: "#374151",
             border: "1px solid #4b5563",
-            height: "36px",
+            minHeight: "36px",
           }} 
         /> 
         <button
