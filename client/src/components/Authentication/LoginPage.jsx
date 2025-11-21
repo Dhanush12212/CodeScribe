@@ -5,7 +5,8 @@ import { MdOutlineMail, MdOutlinePassword } from "react-icons/md";
 import { FaRegEye, FaRegEyeSlash, FaUser, FaPython, FaJava } from "react-icons/fa"; 
 import { SiJavascript, SiReact, SiHtml5, SiCss3, SiCplusplus } from "react-icons/si";
 import { API_URL, clientID } from "../../../config"; 
-import GoogleAuth from './GoogleAuth';  
+import GoogleAuth from './GoogleAuth';   
+import { useAuth } from "../Contexts/AuthContext";
 
 function Login({ login }) {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ function Login({ login }) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState({ text: "", type: "" });
   const [showPassword, setShowPassword] = useState(false); 
+  const { setUser } = useAuth();
 
   const togglePasswordView = () => setShowPassword(!showPassword); 
 
@@ -25,7 +27,7 @@ function Login({ login }) {
         { withCredentials: true }
       );
       const { user } = response.data.data;
-      localStorage.setItem('user', JSON.stringify(user));      
+      setUser(user);      
       setMessage({ text: "🎉 Login Successful!", type: "success" });
       setTimeout(() => navigate("/room"), 500);
     } catch (error) {

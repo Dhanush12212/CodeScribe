@@ -1,9 +1,13 @@
 import React from "react";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-import { API_URL} from "../../../config";
+import { API_URL} from "../../../config"; 
+import { useAuth } from "../Contexts/AuthContext";
 
 const GoogleAuth = ({ clientID , setMessage, navigate }) => {
+
+  const { setUser } = useAuth();
+  
   const handleSuccess = async (credentialResponse) => {
     const token = credentialResponse?.credential;
 
@@ -20,7 +24,7 @@ const GoogleAuth = ({ clientID , setMessage, navigate }) => {
       ); 
       
       const { user } = response.data.data;
-      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
       
       setMessage({ text: "🎉 Login Successful!", type: "success" });
       setTimeout(() => navigate("/room"), 500);
