@@ -5,28 +5,29 @@ import { useNavigate, Link } from "react-router-dom";
 import { socket } from "../socket/socket.js";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { FiLogIn, FiLogOut, FiAlertTriangle } from "react-icons/fi";
+import { FiLogOut, FiAlertTriangle } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { Typewriter } from "react-simple-typewriter";
 import { assets } from "../assets/assets.js";
+import { useAuth } from "../components/Contexts/AuthContext.jsx";
+import { Local, Session } from "../utils/storage.js";
 
 const MySwal = withReactContent(Swal);
 
 function RoomAccess() {
   
-  const [roomId, setRoomId] = useState("");  
+  const [roomId, setRoomId] = useState("");
   
   const [isChecking, setIsChecking] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+  const [showMenu, setShowMenu] = useState(false); 
+  const { user, setUser } = useAuth();
+  
   const suppressAutoNavigateRef = useRef(false);
   const navigate = useNavigate();
 
    useEffect(() => {
     const checkAuth = async () => {
+      setIsChecking(true);
       try {
         const res = await axios.get(`${API_URL}/auth/isLoggedIn`, { withCredentials: true });
         setUser(res.data.user);
@@ -43,7 +44,11 @@ function RoomAccess() {
     if (user) {
       MySwal.fire({
         title: <p className="text-xl font-semibold text-green-400">Welcome Back!</p>,
-        html: `<p style="font-size:16px;">Hello, ${user.name || "User"}!</p>`,
+        html: `<p style="font-size:16px;">Hello, 
+          ${user?.username 
+            ? user.username.charAt(0).toUpperCase()+user.username.slice(1) 
+            : "User"
+          }!</p>`,
         iconHtml: `<svg xmlns="http://www.w3.org/2000/svg" class="text-green-500 mx-auto w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>`,
         showConfirmButton: false,
         timer: 1800,
@@ -54,7 +59,7 @@ function RoomAccess() {
         timerProgressBar: true,
       });
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     socket.on("connect", () => console.log(`Connected: ${socket.id}`));
@@ -151,8 +156,10 @@ function RoomAccess() {
       return;
   }
 
-  const newRoomId = Math.random().toString(36).substring(2, 8);
-  localStorage.setItem("roomId", newRoomId);
+  const newRoomId = Math.random().toString(36).substring(2, 8); 
+  Local.set("roomId", newRoomId);
+  Session.set("roomId", newRoomId);   
+
 
   MySwal.fire({
     title: <p className="text-xl font-semibold text-blue-400">Creating Room...</p>,
@@ -229,8 +236,8 @@ function RoomAccess() {
 
   const handleLogout = async () => {
     try {
-      await axios.put(`${API_URL}/auth/logout`, {}, { withCredentials: true });
-      localStorage.removeItem("user");
+      await axios.put(`${API_URL}/auth/logout`, {}, { withCredentials: true }); 
+      Local.remove("user");
       setUser(null);
       navigate('/register');
       MySwal.fire({
@@ -308,7 +315,10 @@ function RoomAccess() {
                     />
                     <div className="leading-tight"> 
                       <p className="text-md font-semibold text-blue-400 truncate max-w-[140px]">
-                        {user.username || user.name || "User"}
+                        {user?.username
+                          ? user.username.charAt(0).toUpperCase()+user.username.slice(1) 
+                          : "User"
+                        }
                       </p>
                     </div>
                   </div>

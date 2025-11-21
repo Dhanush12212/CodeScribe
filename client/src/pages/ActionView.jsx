@@ -3,10 +3,9 @@ import CodeRunner from "../components/Actions/CodeRunner";
 import CodeAssisstant from "../components/Actions/CodeAssisstant";
 import RoomChat from "../components/Actions/RoomChat";
 import CodeReview from "../components/Actions/CodeReview";
-import ActionButtons from "../components/Actions/ActionButtons";
-import { LANGUAGE_IDS } from '../constants'; 
+import ActionButtons from "../components/UI/ActionButtons";
 
-const ActionView = ({ editorRef, language, languageId }) => {
+const ActionView = ({ editorRef, languageId }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
   const [showInfo, setShowInfo] = useState(false);
   const [showRunPopup, setShowRunPopup] = useState(false);
@@ -14,35 +13,7 @@ const ActionView = ({ editorRef, language, languageId }) => {
   const handleRunClick = () => {
     setActiveComponent("CodeRunner");
     setShowRunPopup(true);
-  };
-
-  const renderComponent = () => {
-    switch (activeComponent) {
-      case "CodeRunner":
-        return (
-          <CodeRunner
-            editorRef={editorRef}
-            languageId={languageId}  
-            showRunPopup={showRunPopup}
-            setShowRunPopup={setShowRunPopup}
-          />
-        );
-
-      case "Code Assisstant":
-        return <CodeAssisstant />;
-
-      case "Room Chat":
-        return <RoomChat />;
-
-      case "Code Review":
-        return <CodeReview 
-        editorRef={editorRef}
-        />;
-
-      default:
-        return null;
-    }
-  };
+  }; 
 
   return (
     <div className="flex flex-col w-full mt-2 relative">
@@ -53,9 +24,31 @@ const ActionView = ({ editorRef, language, languageId }) => {
         onShowInfo={() => setShowInfo(true)}
       />
 
-      <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-2">
-        {renderComponent()}
+      <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-2 relative">
+
+        <div className={activeComponent === "CodeRunner" ? "block" : "hidden"}>
+          <CodeRunner
+            editorRef={editorRef}
+            languageId={languageId}
+            showRunPopup={showRunPopup}
+            setShowRunPopup={setShowRunPopup}
+          />
+        </div>
+
+        <div className={activeComponent === "Code Assisstant" ? "block" : "hidden"}>
+          <CodeAssisstant />
+        </div>
+
+        <div className={activeComponent === "Room Chat" ? "block" : "hidden"}>
+          <RoomChat />
+        </div>
+
+        <div className={activeComponent === "Code Review" ? "block" : "hidden"}>
+          <CodeReview editorRef={editorRef} />
+        </div>
+
       </div>
+
 
       {showInfo && (
         <div
