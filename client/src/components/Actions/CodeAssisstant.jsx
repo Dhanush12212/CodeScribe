@@ -1,21 +1,33 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Loader2, Copy } from "lucide-react";
 import { API_URL } from "../../../config";
+import { Session, Local } from "../../utils/storage";
 
 function CodeAssistant() {
   const [query, setQuery] = useState("");
-  const [responses, setResponses] = useState([]);
+  const [responses, setResponses] = useState(() => {
+    const roomId = Local.get("roomId");
+    return Session.get(`assistant_history_${roomId}`) || [];
+  });
+  
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef(null);
   const scrollRef = useRef(null); 
 
   useEffect(() =>  textareaRef.current?.focus(), []);
- 
+
+  const [roomId] = useState(() => {
+    return Local.get('roomId') || "";
+  }); 
+
   useEffect(() => {
+    if (!roomId) return;
+    Session.set(`assistant_history_${roomId}`, responses);
+    
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [responses]);
+  }, [responses, roomId]);
  
   const handleAsk = async () => {
     if (!query.trim()) return;
@@ -158,24 +170,7 @@ function CodeAssistant() {
                       <h3 className="text-blue-400 font-semibold mb-2 flex items-center justify-between">
                         <span>💻 Code</span>
                   
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => {
-                              setResponses((prev) => {
-                                const updated = [...prev];
-                                const item = updated[i];
-                                item.applied = !item.applied;
-                                return updated;
-                              });
-                            }}
-                            className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                              msg.applied
-                                ? "bg-green-700 text-white cursor-default"
-                                : "bg-blue-700 hover:bg-blue-600 text-white"
-                            }`}
-                          >
-                            {msg.applied ? "Applied" : "Apply"}
-                          </button>
+                        <div className="flex items-center gap-3"> 
                           
                           <button
                             onClick={() => {

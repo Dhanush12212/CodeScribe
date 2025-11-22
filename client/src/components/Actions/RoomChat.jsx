@@ -137,7 +137,7 @@ function RoomChat() {
               }`}
             >
               <div
-                className={`rounded-2xl py-1 px-4 min-w-[100px] text-sm shadow-md  transition-all duration-300 ${
+                className={`rounded-2xl py-1 px-4 min-w-[150px] text-sm shadow-md  transition-all duration-300 ${
                   msg.sender === username
                     ? "bg-blue-700 text-white"
                     : "bg-gray-800 text-gray-100"
@@ -150,7 +150,7 @@ function RoomChat() {
                 <div className="font-semibold text-xs opacity-80">
                   {msg.sender}
                 </div>
-                <p className="whitespace-pre-wrap leading-relaxed font-medium">
+                <p className="whitespace-pre-wrap leading-relaxed font-md text-lg">
                   {msg.text}
                 </p>
                 <div className="text-[10px] text-gray-400 mt-1 text-right">
