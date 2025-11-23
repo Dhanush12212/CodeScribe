@@ -4,14 +4,14 @@ dotenv.config();
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import http from 'http';
-import bodyParser from 'body-parser';
+import http from 'http'; 
 
 import AuthRoute from './routes/auth.routes.js';
 import CodeRunnerRoute from './routes/codeRunner.route.js';
 import connectDB from './db/connectDB.js'; 
 import initSocket from './socket/socket.js';
 import codeAssistantRoute from './routes/codeAssistant.route.js';
+import pdfExportroute from './routes/pdfExport.routes.js';
 import roomRouter from './routes/room.route.js';
 import { verifyJWT } from './middleware/auth.middleware.js';
 
@@ -24,8 +24,7 @@ initSocket(httpServer);
 
 // Middlewares
 app.use(express.json());
-app.use(cookieParser());
-app.use(bodyParser.json());
+app.use(cookieParser()); 
 app.use(cors({
     origin: ['http://localhost:5173', "https://codescribe-alpha.vercel.app"],
     credentials: true,
@@ -38,6 +37,7 @@ app.use(verifyJWT);
 app.use('/api/v1/execute', CodeRunnerRoute);
 app.use('/api/v1/codeAssistant', codeAssistantRoute); 
 app.use("/api/v1/room", roomRouter);
+app.use("/api/v1/export", pdfExportroute);
 
 
 // Start Server
