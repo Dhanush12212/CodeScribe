@@ -1,296 +1,120 @@
-import axios from "axios";
-import * as dotenv from "dotenv";
-dotenv.config();
 import ApiError from "../utils/ApiError.utils.js";
+import {
+  askGemini,
+  extractJson,
+  extractCodeBlocks,
+  cleanupDebuggedCode,
+} from "../utils/gemini.utils.js";
+import { runReviewCode } from "../utils/reviewCode.utils.js";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = process.env.GEMINI_API_URL;
- 
-
-const AskAI = async (req, res) => {
+export const AskAI = async (req, res) => {
   try {
     const { prompt } = req.body;
-    if (!prompt) 
-      throw new ApiError(400, "Prompt is required"); 
+    if (!prompt) throw new ApiError(400, "Prompt is required");
 
-    const body = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `
-                You are a concise coding assistant.
-                Respond strictly in JSON format:
-                {
-                  "explanation": "brief and clear explanation",
-                  "code": "Clean and formatted code"
-                }
-
-                If Java is requested:
-                - Use class name Main
-                - Include public static void main(String[] args)
-
-                Prompt: ${prompt}
-              `,
-            },
-          ],
-        },
-      ],
-    };
-
-    const response = await axios.post(
-      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-      body,
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    const data = response.data;
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-
-    let explanation = "";
-    let code = "";
-
-    try {
-      const parsed = JSON.parse(rawText);
-      explanation = parsed.explanation || "";
-      code = parsed.code || "";
-    } catch {
-      const explanationMatch = rawText.match(/"explanation"\s*:\s*"([^"]+)"/);
-      const codeMatch = rawText.match(/"code"\s*:\s*"([\s\S]+)"/);
-
-      explanation = explanationMatch ? explanationMatch[1] : "";
-      code = codeMatch ? codeMatch[1] : "";
-
-      if (!code) {
-        const codeBlock = rawText.match(/```[a-z]*([\s\S]*?)```/i);
-        code = codeBlock ? codeBlock[1].trim() : "";
+    const fullPrompt = `
+      You are a concise coding assistant.
+      Respond strictly in JSON:
+      {
+        "explanation": "",
+        "code": ""
       }
-    }
 
-    explanation = explanation.replace(/\\"/g, '"').trim();
-    code = code.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim();
+      If Java: use class Main + main method.
 
-    return res.status(200).json({ explanation, code });
-  } catch (error) {
-    console.error("AskAI Error:", error?.response?.data || error.message);
+      Prompt:
+      ${prompt}
+    `;
+
+    const raw = await askGemini(fullPrompt);
+    const parsed = extractJson(raw);
+
+    return res.json({
+      explanation: parsed?.explanation ?? "",
+      code:
+        parsed?.code?.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() ?? "",
+    });
+  } catch {
     throw new ApiError(500, "Gemini request failed.");
   }
 };
 
-
-const DebugAI = async (req, res) => {
+export const DebugAI = async (req, res) => {
   try {
     const { code, language } = req.body;
-
-    if (!code) 
-      throw new ApiError(400, "Code is required" );
-
-    const body = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `
-                You are a professional code debugger.
-                Fix syntax errors, improve readability, and ensure the code runs correctly.
-                
-                Respond strictly in JSON format:
-                {
-                  "debuggedCode": "Fixed and clean code"
-                }
-
-                Language: ${language || "unknown"}
-                Code to debug:
-                ${code}
-              `,
-            },
-          ],
-        },
-      ],
-    };
-
-    const response = await axios.post(
-      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-      body,
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    const data = response.data;
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    let debuggedCode = "";
-
-    try {
-      const parsed = JSON.parse(rawText);
-      debuggedCode = parsed.debuggedCode || "";
-    } catch {
-      const match = rawText.match(/"debuggedCode"\s*:\s*"([\s\S]+)"/);
-      debuggedCode = match ? match[1] : "";
-
-      if (!debuggedCode) {
-        const codeBlock = rawText.match(/```[a-z]*([\s\S]*?)```/i);
-        debuggedCode = codeBlock ? codeBlock[1].trim() : "";
-      }
-    }
-
-    debuggedCode = debuggedCode.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim();
-    return res.status(200).json({ debuggedCode });
-  } catch (error) {
-    console.error("DebugAI Error:", error?.response?.data || error.message);
-    throw new ApiError(500, "Gemini debugging failed"); 
-  }
-};
-  
-// api/v1/codeAssistant/AIPrompt
-const AIPrompt = async (req, res) => {
-  try {
-    const { prompt, code } = req.body;
-
-    if (!prompt) throw new ApiError(400, "Prompt is required");
+    if (!code) throw new ApiError(400, "Code is required");
 
     const fullPrompt = `
-      You are an AI code assistant. Modify the given code based on the user's request.
-      Ensure clean, correct, and readable output.
-      Return ONLY the updated code. Do not include explanations, comments or markdown.
-      Add a one line comment for what is added or updated.
-      
-      User Request:
-      ${prompt}
+      You are a professional code debugger.
 
-      Original Code:
+      IMPORTANT RULES (strict):
+      - For C:
+          • Do NOT split string literals across multiple lines.
+          • Keep printf/puts/Console.WriteLine strings in a SINGLE line.
+          • If the string contains a newline, write it as "\\n".
+          • Never break the quote in the middle.
+      - Produce clean, correct, runnable code.
+      - No markdown.
+      - No explanation.
+
+      Respond ONLY as:
+      {
+        "debuggedCode": "<fixed code here>"
+      }
+
+      Language: ${language}
+      Code:
       ${code}
     `;
 
-    const response = await axios.post(
-      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-      {
-        contents: [
-          {
-            parts: [{ text: fullPrompt }],
-          },
-        ],
-      },
-      { headers: { "Content-Type": "application/json" } }
-    );
+    const raw = await askGemini(fullPrompt);
+    const parsed = extractJson(raw);
 
-    const textOutput =
-      response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
- 
-    let cleanedCode =
-      textOutput.match(/```[a-z]*\n?([\s\S]*?)```/i)?.[1]?.trim()
-      || textOutput.trim();
+    let debuggedCode = parsed?.debuggedCode || extractCodeBlocks(raw);
 
-      return res.status(200).json({ updatedCode: cleanedCode });
-      
-  } catch (error) {
-    console.error("Gemini Code Update Error:", error?.response?.data || error.message);
-    return res.status(500).json({ error: "Failed to update code using AI" });
-  }
-}; 
+    debuggedCode = cleanupDebuggedCode(debuggedCode);
 
-// api/v1/codeAssistant/reviewCode
-const reviewCode = async (req, res) => {
-  const { code } = req.body;
-
-  const prompt = `
-    You are an AI code assistant.
-
-    Return ONLY valid JSON with:
-    {
-      "time_complexity": "",
-      "space_complexity": "",
-      "best_practices": [],
-      "optimized_code": "",
-      "reasoning": ""
-    }
-
-    Rules:
-    - Escape all double quotes inside optimized_code using \\".
-    - No trailing commas.
-    - No backticks.
-    - No markdown formatting.
-    - Only return pure JSON.
-    - For reasoning: Strictly give the response in the bullet points similar to the best practices.
-
-    Code to review:
-    ${code}
-    `;
-
-  try {
-    const response = await axios.post(
-      `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-      { contents: [{ parts: [{ text: prompt }] }] }
-    );
-
-    let text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    text = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-    text = text.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
-
-    const codeMatch = text.match(/"optimized_code"\s*:\s*"(.*?)"(?=\s*[},])/s);
-
-    if (codeMatch) {
-      const raw = codeMatch[1];
-
-      const escaped = raw
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, "\\n")
-        .replace(/\t/g, "\\t");
-
-      text = text.replace(
-        /"optimized_code"\s*:\s*"(.*?)"(?=\s*[},])/s,
-        `"optimized_code":"${escaped}"`
-      );
-    }
-
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch (err) {
-      console.error("JSON Parse Failed. Raw text:", text);
-      return res.status(500).json({ error: "Invalid JSON returned from AI" });
-    }
-
-    let cleanOptimized = json.optimized_code || "";
-    cleanOptimized = cleanOptimized
-      .replace(/\\n/g, "\n")
-      .replace(/\\t/g, "    ")
-      .replace(/\\"/g, '"')
-      .trim();
-
-    let cleanReasoning = json.reasoning || "";
-
-    cleanReasoning = cleanReasoning
-      .replace(/\n/g, " ")           
-      .split("*")                   
-      .map((item) => item.trim())     
-      .filter(Boolean)               
-      .map((item) => `• ${item}`);    
-
-
-
-    const formatted = {
-      time_complexity: json.time_complexity || "Not provided",
-      space_complexity: json.space_complexity || "Not provided",
-      optimized_code: cleanOptimized,
-      reasoning: cleanReasoning,  
-      best_practices: Array.isArray(json.best_practices)
-        ? json.best_practices
-        : typeof json.best_practices === "string"
-        ? json.best_practices.split("\n").map((s) => s.trim()).filter(Boolean)
-        : [],
-    };
-
-    return res.json(formatted);
-
-  } catch (error) {
-    console.error("Gemini Error:", error.response?.data || error.message);
-    return res.status(500).json({ error: "Code review failed" });
+    return res.json({ debuggedCode });
+  } catch {
+    throw new ApiError(500, "Gemini debugging failed");
   }
 };
 
- 
-export { AskAI, DebugAI, AIPrompt, reviewCode };
+export const AIPrompt = async (req, res) => {
+  try {
+    const { prompt, code } = req.body;
+    if (!prompt) throw new ApiError(400, "Prompt is required");
+
+    const fullPrompt = `
+      Modify code based on request.
+      Return ONLY updated code. No markdown.
+
+      Request:
+      ${prompt}
+
+      Code:
+      ${code}
+    `;
+
+    const raw = await askGemini(fullPrompt);
+    const cleaned = extractCodeBlocks(raw);
+
+    return res.json({ updatedCode: cleaned });
+  } catch {
+    return res.status(500).json({ error: "Failed to update code using AI" });
+  }
+};
+
+export const reviewCode = async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) throw new ApiError(400, "Code is required");
+
+    const result = await runReviewCode(code);
+    if (!result) return res.status(500).json({ error: "Invalid JSON" });
+
+    return res.json(result);
+  } catch {
+    return res.status(500).json({ error: "Code review failed" });
+  }
+};
