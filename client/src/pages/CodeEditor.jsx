@@ -30,65 +30,7 @@ function CodeEditor({ roomId }) {
   const senderId = useRef(Date.now() + Math.random());
   const latestCodeRef = useRef("");
   const isRemoteUpdate = useRef(false);
- 
-  const applyLineByLineUpdate = (editor, monaco, newCode) => {
-    if (!editor || !monaco) return;
-    const model = editor.getModel();
-    if (!model) return;
 
-    const oldCode = model.getValue();
-    if (oldCode === newCode) return;
-
-    const oldLines = oldCode.split("\n");
-    const newLines = newCode.split("\n");
-    const edits = [];
-
-    const maxLines = Math.max(oldLines.length, newLines.length);
- 
-    let i = 0;
-    while (i < maxLines) {
-      const oldLine = oldLines[i] ?? null;
-      const newLine = newLines[i] ?? null;
-
-      if (oldLine === newLine) {
-        i++;
-        continue;
-      }
- 
-      let j = i + 1;
-      while (j < maxLines) {
-        const o = oldLines[j] ?? null;
-        const n = newLines[j] ?? null;
-        if (o === n) break;
-        j++;
-      }
- 
-      const startLineNumber = i + 1;
- 
-      let endLineNumber = Math.min(j, oldLines.length);
-      let endColumn = 1;
-      if (endLineNumber > 0 && endLineNumber <= oldLines.length) {
-        endColumn = oldLines[endLineNumber - 1]?.length + 1 || 1;
-      } else { 
-        endLineNumber = startLineNumber;
-        endColumn = 1;
-      }
- 
-      const replacementText = newLines.slice(i, j).join("\n");
-
-      edits.push({
-        range: new monaco.Range(startLineNumber, 1, endLineNumber, endColumn),
-        text: replacementText,
-      });
-
-      i = j;
-    }
-
-    if (edits.length > 0) {
-      editor.executeEdits("remote-update", edits);
-    }
-  };
- 
   const handleDebug = async () => {
     const currentCode = editorRef.current?.getValue();
     if (!currentCode?.trim()) return alert("No code to debug!");
@@ -103,9 +45,10 @@ function CodeEditor({ roomId }) {
       );
 
       const { debuggedCode } = response.data;
-      if (response.status === 200 && debuggedCode) { 
+
+      if (response.status === 200 && debuggedCode) {
         isRemoteUpdate.current = true;
-        applyLineByLineUpdate(editorRef.current, monacoRef.current, debuggedCode);
+        editorRef.current.setValue(debuggedCode);   
         latestCodeRef.current = debuggedCode;
         setTimeout(() => (isRemoteUpdate.current = false), 100);
       } else {
@@ -119,7 +62,7 @@ function CodeEditor({ roomId }) {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     if (!roomId) return;
     if (!socket.connected) socket.connect();
@@ -130,37 +73,36 @@ function CodeEditor({ roomId }) {
     });
 
     const localSenderId = senderId.current;
- 
+
     socket.on("languageChange", ({ roomId: updatedRoomId, language: newLang }) => {
       if (updatedRoomId === roomId) {
         setLanguage(newLang);
         setLanguageId(LANGUAGE_IDS[newLang]);
         const newCode = CODE_SNIPPETS[newLang];
+
         if (editorRef.current) {
           isRemoteUpdate.current = true;
-          editorRef.current.setValue(newCode);
+          editorRef.current.setValue(newCode); 
           latestCodeRef.current = newCode;
           setTimeout(() => (isRemoteUpdate.current = false), 100);
         }
       }
     });
- 
+
     socket.on("updatedCode", ({ roomId: updatedRoomId, code, senderId: remoteId }) => {
       if (updatedRoomId === roomId && remoteId !== localSenderId && code !== latestCodeRef.current) {
         const editor = editorRef.current;
-        const monaco = monacoRef.current;
-        if (!editor || !monaco) return;
- 
+        if (!editor) return;
+
         const cursor = editor.getPosition();
         isRemoteUpdate.current = true;
+
         latestCodeRef.current = code;
- 
-        applyLineByLineUpdate(editor, monaco, code);
- 
+        editor.setValue(code); 
+
         try {
           editor.getAction("editor.action.formatDocument").run();
-        } catch (e) { 
-        }
+        } catch (e) {}
 
         if (cursor) editor.setPosition(cursor);
         setTimeout(() => (isRemoteUpdate.current = false), 100);
@@ -172,7 +114,7 @@ function CodeEditor({ roomId }) {
       socket.off("updatedCode");
     };
   }, [roomId]);
- 
+
   const handleOnChange = useCallback(
     (newCode) => {
       if (!newCode || isRemoteUpdate.current) return;
@@ -185,17 +127,19 @@ function CodeEditor({ roomId }) {
     },
     [roomId]
   );
- 
+
   const onSelectLanguage = (selectedLanguage, id) => {
     setLanguage(selectedLanguage);
     setLanguageId(id);
     const newCode = CODE_SNIPPETS[selectedLanguage];
+
     if (editorRef.current) {
       isRemoteUpdate.current = true;
       editorRef.current.setValue(newCode);
       latestCodeRef.current = newCode;
       setTimeout(() => (isRemoteUpdate.current = false), 100);
-    } 
+    }
+
     socket.emit("languageChange", { roomId, language: selectedLanguage, senderId: senderId.current });
   };
 
@@ -203,7 +147,7 @@ function CodeEditor({ roomId }) {
     setTheme(selectedTheme);
     setThemeOpen(false);
   };
- 
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setFontSize(16);
@@ -214,7 +158,7 @@ function CodeEditor({ roomId }) {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
- 
+
   const onMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -223,7 +167,7 @@ function CodeEditor({ roomId }) {
     editor.setValue(initialCode);
     latestCodeRef.current = initialCode;
   };
- 
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (themeRef.current && !themeRef.current.contains(event.target)) {
@@ -233,7 +177,7 @@ function CodeEditor({ roomId }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
- 
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.shiftKey && e.ctrlKey && (e.key === "S" || e.key === "s")) {
@@ -244,15 +188,15 @@ function CodeEditor({ roomId }) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
- 
+
   const handleAICodeEdit = async () => {
     setPromptShow(false);
 
     try {
       setLoading(true);
       const editor = editorRef.current;
-      const monaco = monacoRef.current;
-      if (!editor || !monaco) return alert("Editor not initialized yet.");
+      if (!editor) return alert("Editor not initialized yet.");
+
       const currentCode = editor.getValue();
       if (!currentCode?.trim()) return alert("No code found in editor.");
 
@@ -263,44 +207,37 @@ function CodeEditor({ roomId }) {
       );
 
       const updatedCode = res?.data?.updatedCode ?? currentCode;
-      console.log("AI Code Received:", updatedCode?.slice(0, 100));
 
       isRemoteUpdate.current = true;
- 
-      applyLineByLineUpdate(editor, monaco, updatedCode);
+
+      editor.setValue(updatedCode); 
 
       try {
         editor.getAction("editor.action.formatDocument").run();
-      } catch (e) { 
-      } finally { 
-        setLoading(false);
-      }
+      } catch (e) {}
 
       latestCodeRef.current = updatedCode;
- 
+
       socket.emit("updatedCode", {
         roomId,
         code: updatedCode,
         senderId: senderId.current,
       });
 
-      setTimeout(() => {
-        isRemoteUpdate.current = false;
-      }, 100);
-
-      console.log("AI Updated Code Applied Successfully!");
+      setTimeout(() => (isRemoteUpdate.current = false), 100);
+      setLoading(false);
     } catch (error) {
       console.error("AI Code Update Error:", error.message || error);
       alert("AI Code update failed. Please try again.");
     }
-  }; 
+  };
 
   return (
     <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300">
       <div className="relative w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
 
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50 text-white rounded-lg h-[60vh] md:h-[70vh] custom-xl:h-[90vh]">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50 text-white rounded-lg h-[98vh]">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
             <span className="ml-3 text-lg">Modifying Code..</span>
           </div>

@@ -23,6 +23,7 @@ function RoomAccess() {
   const { user, setUser } = useAuth();
   
   const suppressAutoNavigateRef = useRef(false);
+  const hasWelcomedRef = useRef(false);
   const navigate = useNavigate();
 
    useEffect(() => {
@@ -41,7 +42,8 @@ function RoomAccess() {
   }, [navigate]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !hasWelcomedRef.current) {
+    hasWelcomedRef.current = true;
       MySwal.fire({
         title: <p className="text-xl font-semibold text-green-400">Welcome Back!</p>,
         html: `<p style="font-size:16px;">Hello, 

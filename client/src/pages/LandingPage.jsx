@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../config";
+import axios from 'axios';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [code] = useState(`function greet(name) {
     return "Hello, " + name + "!";
   }`);
@@ -33,7 +36,24 @@ export default function LandingPage() {
 
   const [explanation, setExplanation] = useState("");
 
-  const handleOnClick = () => navigate("/register");
+  const handleOnClick = async() => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/auth/isLoggedIn`, 
+        {withCredentials: true}
+      );
+      
+      if(res.data?.success) {
+        navigate("/room");  
+      } else {
+        navigate("/login");  
+      }
+    } catch(err) {
+      navigate("/login");
+    } finally {
+      setLoading(false);
+    }
+  } 
 
   const handleExplainCode = () => {
     setExplanation(
