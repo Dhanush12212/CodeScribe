@@ -1,5 +1,4 @@
- 
-//Session Storage
+ //Session Storage
 export const Session = {
   set(key, value) {
     const tabKey = `${window.name}-${key}`;
