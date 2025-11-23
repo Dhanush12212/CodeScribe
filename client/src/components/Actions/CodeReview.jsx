@@ -2,11 +2,13 @@ import React from "react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { API_URL } from "../../../config";
+import { Copy } from "lucide-react";
 
 function CodeReview({ editorRef }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [review, setReview] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const fetchCodeReview = async () => {
     try {
@@ -53,6 +55,12 @@ function CodeReview({ editorRef }) {
 
     fetchCodeReview();
   }, []);
+
+  const copyCode = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   if (loading)
     return (
@@ -128,7 +136,21 @@ function CodeReview({ editorRef }) {
       >
         <h2 className="text-lg font-medium text-green-300">Optimized Code</h2>
 
-        <pre className="mt-4 bg-black/40 p-4 rounded-lg text-green-400 text-[13px] overflow-x-auto whitespace-pre-wrap">
+        <pre className="mt-4 bg-black/40 p-4 rounded-lg text-green-400 text-[13px] overflow-visible whitespace-pre-wrap relative">
+
+          <button
+            onClick={() => copyCode(review.optimized_code)}
+            className="text-gray-400 hover:text-gray-200 transition absolute top-2 right-2"
+            title="Copy code"
+          >
+            <Copy size={16} />
+            {copied && (
+              <span className="absolute top-[-26px] right-0 text-xs bg-gray-800 text-green-400 px-2 py-1 rounded">
+                Copied
+              </span>
+            )}
+          </button>
+
           {review.optimized_code}
         </pre>
       </section>
