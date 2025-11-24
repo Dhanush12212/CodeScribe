@@ -96,7 +96,8 @@ function RoomChat() {
     inputRef.current.style.height = inputRef.current.scrollHeight + "px";
   }
 }, [input]);
- 
+
+useEffect(() =>  inputRef.current?.focus(), []); 
 
   return (
     <div

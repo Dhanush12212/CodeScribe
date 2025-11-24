@@ -9,6 +9,22 @@ import axios from "axios";
 import { API_URL } from "../../config";
 import AIPromptModal from "../components/UI/AIPromptModel";
 
+export const Session = {
+  set(key, value) {
+    const tabKey = `${window.name}-${key}`;
+    sessionStorage.setItem(tabKey, JSON.stringify(value));
+  },
+  get(key) {
+    const tabKey = `${window.name}-${key}`;
+    const value = sessionStorage.getItem(tabKey);
+    return value ? JSON.parse(value) : null;
+  },
+  remove(key) {
+    const tabKey = `${window.name}-${key}`;
+    sessionStorage.removeItem(tabKey);
+  },
+};
+
 function CodeEditor({ roomId }) {
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState("java");
@@ -18,6 +34,7 @@ function CodeEditor({ roomId }) {
   const [isDebugging, setIsDebugging] = useState(false);
   const [promptShow, setPromptShow] = useState(false);
   const [AIPrompt, setAIPrompt] = useState("");
+
   const [fontSize, setFontSize] = useState(() => {
     if (window.innerWidth >= 1024) return 15;
     if (window.innerWidth >= 768) return 14;
@@ -27,15 +44,19 @@ function CodeEditor({ roomId }) {
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
   const themeRef = useRef(null);
+
   const senderId = useRef(Date.now() + Math.random());
   const latestCodeRef = useRef("");
   const isRemoteUpdate = useRef(false);
 
+  const initialLoad = useRef(true);
+  const firstSocketSyncDone = useRef(false);
+
   const handleDebug = async () => {
     const currentCode = editorRef.current?.getValue();
-    if (!currentCode?.trim()) return alert("No code to debug!");
-    setIsDebugging(true);
+    if (!currentCode?.trim()) return;
 
+    setIsDebugging(true);
     try {
       setLoading(true);
       const response = await axios.post(
@@ -43,20 +64,14 @@ function CodeEditor({ roomId }) {
         { code: currentCode, language },
         { withCredentials: true }
       );
-
       const { debuggedCode } = response.data;
-
       if (response.status === 200 && debuggedCode) {
         isRemoteUpdate.current = true;
-        editorRef.current.setValue(debuggedCode);   
+        editorRef.current.setValue(debuggedCode);
         latestCodeRef.current = debuggedCode;
-        setTimeout(() => (isRemoteUpdate.current = false), 100);
-      } else {
-        alert("Debugging failed. No valid response from AI.");
+        Session.set(`code-${roomId}`, debuggedCode);
+        setTimeout(() => (isRemoteUpdate.current = false), 120);
       }
-    } catch (error) {
-      console.error("Error while debugging:", error);
-      alert("Something went wrong while debugging. Please try again.");
     } finally {
       setIsDebugging(false);
       setLoading(false);
@@ -68,29 +83,24 @@ function CodeEditor({ roomId }) {
     if (!socket.connected) socket.connect();
 
     socket.once("connect", () => {
-      console.log("Socket connected:", socket.id);
       socket.emit("joinRoom", roomId);
     });
 
-    const localSenderId = senderId.current;
-
-    socket.on("languageChange", ({ roomId: updatedRoomId, language: newLang }) => {
-      if (updatedRoomId === roomId) {
-        setLanguage(newLang);
-        setLanguageId(LANGUAGE_IDS[newLang]);
-        const newCode = CODE_SNIPPETS[newLang];
-
-        if (editorRef.current) {
-          isRemoteUpdate.current = true;
-          editorRef.current.setValue(newCode); 
-          latestCodeRef.current = newCode;
-          setTimeout(() => (isRemoteUpdate.current = false), 100);
-        }
-      }
+    const localSenderId = senderId.current; 
+      socket.on("languageChange", ({ roomId: updatedRoomId, language: newLang }) => {
+      if (initialLoad.current) return;
+      if (updatedRoomId !== roomId) return;
+        
+      if (newLang === language) return;
+        
+      setLanguage(newLang);
+      setLanguageId(LANGUAGE_IDS[newLang]); 
     });
 
     socket.on("updatedCode", ({ roomId: updatedRoomId, code, senderId: remoteId }) => {
-      if (updatedRoomId === roomId && remoteId !== localSenderId && code !== latestCodeRef.current) {
+      if (initialLoad.current) return;
+
+      if (updatedRoomId === roomId && remoteId !== localSenderId) {
         const editor = editorRef.current;
         if (!editor) return;
 
@@ -98,14 +108,19 @@ function CodeEditor({ roomId }) {
         isRemoteUpdate.current = true;
 
         latestCodeRef.current = code;
-        editor.setValue(code); 
+        editor.setValue(code);
 
         try {
           editor.getAction("editor.action.formatDocument").run();
-        } catch (e) {}
+        } catch {}
 
         if (cursor) editor.setPosition(cursor);
-        setTimeout(() => (isRemoteUpdate.current = false), 100);
+
+        Session.set(`code-${roomId}`, code);
+
+        setTimeout(() => (isRemoteUpdate.current = false), 120);
+
+        firstSocketSyncDone.current = true;
       }
     });
 
@@ -118,7 +133,10 @@ function CodeEditor({ roomId }) {
   const handleOnChange = useCallback(
     (newCode) => {
       if (!newCode || isRemoteUpdate.current) return;
+
       latestCodeRef.current = newCode;
+      Session.set(`code-${roomId}`, newCode);
+
       socket.emit("updatedCode", {
         roomId,
         code: newCode,
@@ -131,16 +149,21 @@ function CodeEditor({ roomId }) {
   const onSelectLanguage = (selectedLanguage, id) => {
     setLanguage(selectedLanguage);
     setLanguageId(id);
+
     const newCode = CODE_SNIPPETS[selectedLanguage];
+    isRemoteUpdate.current = true;
 
-    if (editorRef.current) {
-      isRemoteUpdate.current = true;
-      editorRef.current.setValue(newCode);
-      latestCodeRef.current = newCode;
-      setTimeout(() => (isRemoteUpdate.current = false), 100);
-    }
+    editorRef.current.setValue(newCode);
+    latestCodeRef.current = newCode;
+    Session.set(`code-${roomId}`, newCode);
 
-    socket.emit("languageChange", { roomId, language: selectedLanguage, senderId: senderId.current });
+    setTimeout(() => (isRemoteUpdate.current = false), 120);
+
+    socket.emit("languageChange", {
+      roomId,
+      language: selectedLanguage,
+      senderId: senderId.current,
+    });
   };
 
   const onSelectTheme = (selectedTheme) => {
@@ -154,7 +177,6 @@ function CodeEditor({ roomId }) {
       else if (window.innerWidth >= 768) setFontSize(14);
       else setFontSize(12);
     };
-
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -162,10 +184,20 @@ function CodeEditor({ roomId }) {
   const onMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
-    editor.focus();
-    const initialCode = CODE_SNIPPETS[language] ?? "";
+
+    const savedCode = Session.get(`code-${roomId}`);
+    const initialCode = savedCode ?? CODE_SNIPPETS[language];
+
+    initialLoad.current = true;
     editor.setValue(initialCode);
     latestCodeRef.current = initialCode;
+    Session.set(`code-${roomId}`, initialCode);
+
+    setTimeout(() => {
+      initialLoad.current = false;
+    }, 400);
+
+    editor.focus();
   };
 
   useEffect(() => {
@@ -194,11 +226,8 @@ function CodeEditor({ roomId }) {
 
     try {
       setLoading(true);
-      const editor = editorRef.current;
-      if (!editor) return alert("Editor not initialized yet.");
-
-      const currentCode = editor.getValue();
-      if (!currentCode?.trim()) return alert("No code found in editor.");
+      const currentCode = editorRef.current?.getValue();
+      if (!currentCode?.trim()) return;
 
       const res = await axios.post(
         `${API_URL}/codeAssistant/AIPrompt`,
@@ -209,14 +238,10 @@ function CodeEditor({ roomId }) {
       const updatedCode = res?.data?.updatedCode ?? currentCode;
 
       isRemoteUpdate.current = true;
-
-      editor.setValue(updatedCode); 
-
-      try {
-        editor.getAction("editor.action.formatDocument").run();
-      } catch (e) {}
-
+      editorRef.current.setValue(updatedCode);
       latestCodeRef.current = updatedCode;
+
+      Session.set(`code-${roomId}`, updatedCode);
 
       socket.emit("updatedCode", {
         roomId,
@@ -224,33 +249,30 @@ function CodeEditor({ roomId }) {
         senderId: senderId.current,
       });
 
-      setTimeout(() => (isRemoteUpdate.current = false), 100);
+      setTimeout(() => (isRemoteUpdate.current = false), 120);
       setLoading(false);
-    } catch (error) {
-      console.error("AI Code Update Error:", error.message || error);
-      alert("AI Code update failed. Please try again.");
+    } catch {
+      setLoading(false);
     }
   };
 
   return (
     <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300">
       <div className="relative w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
-
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50 text-white rounded-lg h-[98vh]">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
             <span className="ml-3 text-lg">Modifying Code..</span>
           </div>
         )}
-        
+
         <div className="flex gap-4 mb-2 items-center p-2">
           <LanguageSelector language={language} onSelect={onSelectLanguage} />
 
-          {/* Theme Selector */}
           <div ref={themeRef} className="relative inline-block text-left">
             <button
               onClick={() => setThemeOpen(!themeOpen)}
-              className="inline-flex justify-between items-center px-4 py-2 w-44 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700 focus:outline-none"
+              className="inline-flex justify-between items-center px-4 py-2 w-44 bg-gray-800 text-white rounded-md shadow hover:bg-gray-700"
             >
               {THEMES.find((t) => t.value === theme)?.label || "Select Theme"}
               <ChevronDown
@@ -259,13 +281,14 @@ function CodeEditor({ roomId }) {
                 }`}
               />
             </button>
+
             {themeOpen && (
               <ul className="absolute mt-2 w-44 rounded-md shadow-lg bg-gray-900 ring-1 ring-black ring-opacity-5 z-10 max-h-60 overflow-y-auto animate-fadeIn">
                 {THEMES.map((t) => (
                   <li
                     key={t.value}
                     onClick={() => onSelectTheme(t.value)}
-                    className={`cursor-pointer px-2 py-2 text-sm md:text-base font-medium transition-colors duration-150 ${
+                    className={`cursor-pointer px-2 py-2 text-sm md:text-base font-medium transition-colors ${
                       theme === t.value
                         ? "bg-gray-800 text-blue-400"
                         : "text-gray-200 hover:bg-gray-800 hover:text-blue-400"
@@ -278,11 +301,10 @@ function CodeEditor({ roomId }) {
             )}
           </div>
 
-          {/* Debug Button */}
           <button
             onClick={handleDebug}
             disabled={isDebugging}
-            className={`ml-auto text-white px-4 py-2 rounded-md transition-all duration-200 ${
+            className={`ml-auto text-white px-4 py-2 rounded-md transition ${
               isDebugging
                 ? "bg-gray-700 cursor-not-allowed"
                 : "bg-gray-800 hover:bg-blue-700"
@@ -319,7 +341,6 @@ function CodeEditor({ roomId }) {
           onSubmit={handleAICodeEdit}
         />
       )}
-      
 
       <style>{`
         @keyframes fadeIn {
