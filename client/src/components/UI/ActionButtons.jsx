@@ -1,8 +1,8 @@
 import React from "react";
-import { Info } from "lucide-react";
+import { Share2 } from "lucide-react";
 
-const ActionButtons = ({ activeComponent, setActiveComponent, onRunClick, onShowInfo }) => {
-  
+const ActionButtons = ({ activeComponent, setActiveComponent, onShowSharePopup }) => {
+
   const buttonBaseStyle =
     "w-full py-3 rounded-md font-medium transition-all duration-200 cursor-pointer";
 
@@ -10,7 +10,7 @@ const ActionButtons = ({ activeComponent, setActiveComponent, onRunClick, onShow
     { label: "Run Code", key: "CodeRunner", color: "#16a34a" },
     { label: "Code Assistant", key: "Code Assisstant", color: "#2563eb" },
     { label: "Room Chat", key: "Room Chat", color: "#6366F1" },
-    { label: "Code Review", key:  "Code Review", color: "#8b5cf6" },
+    { label: "Code Review", key: "Code Review", color: "#8b5cf6" },
   ];
 
   return (
@@ -19,41 +19,33 @@ const ActionButtons = ({ activeComponent, setActiveComponent, onRunClick, onShow
         {buttons.map(({ label, key, color }) => (
           <button
             key={key}
-            onClick={() =>
-              setActiveComponent(key)
-            }
+            onClick={() => setActiveComponent(key)}
             className={buttonBaseStyle}
             style={{
               backgroundColor: activeComponent === key ? color : "transparent",
               color: activeComponent === key ? "#ffffff" : color,
-              border: `1px solid ${color}`,
-            }}
-            onMouseEnter={(e) => {
-              if (activeComponent !== key) {
-                e.target.style.backgroundColor = color;
-                e.target.style.color = "#fff";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeComponent !== key) {
-                e.target.style.backgroundColor = "transparent";
-                e.target.style.color = color;
-              }
+              border: `1px solid ${color}`,   
             }}
           >
             {label}
           </button>
         ))}
       </div>
-
-      {/* Info Icon */}
+ 
       <button
-        onClick={onShowInfo}
-        style={{ border: "1px solid #facc15" }}
-        className="p-2 rounded-full text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200 "
-        title="Feature Info"
+        onClick={onShowSharePopup}
+        className="
+          p-2 rounded-full 
+          hover:bg-blue-500 hover:text-white 
+          transition-all
+        "
+        style={{
+          border: "1px solid #3b82f6",   
+          color: "#60a5fa",         
+        }}
+        title="Share"
       >
-        <Info size={22} />
+        <Share2 size={22} />
       </button>
     </div>
   );
