@@ -10,10 +10,16 @@ import axios from "axios";
 
 const ActionView = ({ editorRef, languageId, language }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
+
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showShareRoomOptions, setShowShareRoomOptions] = useState(false);
   const [showShareInfo, setShowShareInfo] = useState(false);
+  const [showRunPopup, setShowRunPopup] = useState(false);
+
   const [isDownloading, setIsDownloading] = useState(false);
+  const [shareLink, setShareLink] = useState("");
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const popupRef = useRef(null);
 
@@ -23,23 +29,44 @@ const ActionView = ({ editorRef, languageId, language }) => {
         setShowSharePopup(false);
       }
     };
-    if (showSharePopup)
-      document.addEventListener("mousedown", handleClickOutside);
+    if (showSharePopup) document.addEventListener("mousedown", handleClickOutside);
 
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showSharePopup]);
- 
+
+
+  const handleGenerateLink = async (access) => {
+    try {
+      setLinkLoading(true);
+      setShareLink("");
+
+      const roomId = window.location.pathname.split("/").pop();
+
+      const res = await axios.post(
+        `${API_URL}/room/generateLink`,
+        { roomId, access },
+        { withCredentials: true }
+      );
+
+      setShareLink(res.data.url);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate link");
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
 
   const handleDownloadPDF = async () => {
-    try { 
+    try {
       setShowSharePopup(false);
 
       const code = editorRef.current?.getValue();
       if (!code) return alert("No code available to export!");
 
       setIsDownloading(true);
- 
+
       const lang =
         editorRef.current?.getModel()?.getLanguageId() ||
         language ||
@@ -48,10 +75,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
       const response = await axios.post(
         `${API_URL}/export/pdf`,
         { code, language: lang },
-        {
-          withCredentials: true,
-          responseType: "blob",
-        }
+        { withCredentials: true, responseType: "blob" }
       );
 
       const blob = new Blob([response.data], { type: "application/pdf" });
@@ -74,14 +98,15 @@ const ActionView = ({ editorRef, languageId, language }) => {
   };
 
   return (
-    <div className="flex flex-col w-full mt-2 relative"> 
+    <div className="flex flex-col w-full mt-2 relative">
+ 
       {isDownloading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-50 text-white rounded-lg">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
           <span className="mt-3 text-lg">Generating PDF...</span>
         </div>
       )}
-
+ 
       <ActionButtons
         activeComponent={activeComponent}
         setActiveComponent={setActiveComponent}
@@ -93,35 +118,45 @@ const ActionView = ({ editorRef, languageId, language }) => {
       />
  
       <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-2 relative">
-        {activeComponent === "CodeRunner" && (
-          <CodeRunner editorRef={editorRef} languageId={languageId} />
-        )}
-        {activeComponent === "Code Assisstant" && <CodeAssisstant />}
-        {activeComponent === "Room Chat" && <RoomChat />}
-        {activeComponent === "Code Review" && (
+            
+        <div className={activeComponent === "CodeRunner" ? "block" : "hidden"}>
+          <CodeRunner 
+            editorRef={editorRef} 
+            languageId={languageId}
+            showRunPopup={showRunPopup}
+            setShowRunPopup={setShowRunPopup}
+          />
+        </div>
+            
+        <div className={activeComponent === "Code Assisstant" ? "block" : "hidden"}>
+          <CodeAssisstant />
+        </div>
+            
+        <div className={activeComponent === "Room Chat" ? "block" : "hidden"}>
+          <RoomChat />
+        </div>
+            
+        <div className={activeComponent === "Code Review" ? "block" : "hidden"}>
           <CodeReview editorRef={editorRef} />
-        )}
-      </div>
+        </div>
+            
+      </div> 
  
       {showSharePopup && (
         <div
           ref={popupRef}
-          className="
-            absolute top-[60px] right-3
-            max-w-[90vw] sm:max-w-[320px] md:max-w-[380px]
-            w-[80vw] sm:w-[28vw]
-            rounded-xl p-5 shadow-2xl z-30
-            transition-all duration-200
-          "
+          className="absolute top-[60px] right-3 max-w-[380px] w-[80vw] sm:w-[28vw]
+          rounded-xl p-5 shadow-2xl z-30"
           style={{
             background: "rgba(25, 25, 25, 0.92)",
             backdropFilter: "blur(8px)",
-            border: "1px solid rgba(59, 130, 246, 0.5)",
+            border: "1px solid rgba(59,130,246,0.5)",
           }}
         >
+
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg sm:text-xl font-semibold text-blue-400">
-              {showShareInfo ? "Feature Information" : "Share Options"}
+            <h3 className="text-lg font-semibold text-blue-400">
+              {showShareInfo ? "Feature Information" : "Share Your Workspace"}
             </h3>
 
             <Info
@@ -130,41 +165,17 @@ const ActionView = ({ editorRef, languageId, language }) => {
               onClick={() => setShowShareInfo(!showShareInfo)}
             />
           </div>
-
-          {/* INFO */}
+ 
           {showShareInfo ? (
             <div className="text-sm text-gray-300 space-y-3 leading-relaxed">
-              <p>
-                <span className="text-green-400 font-semibold">Run Code:</span>{" "}
-                Execute your code instantly.
-              </p>
-              <p>
-                <span className="text-blue-400 font-semibold">
-                  Code Assistant:
-                </span>{" "}
-                Debug & optimize your code.
-              </p>
-              <p>
-                <span className="text-indigo-400 font-semibold">
-                  Room Chat:
-                </span>{" "}
-                Collaborate with others live.
-              </p>
-              <p>
-                <span className="text-purple-400 font-semibold">
-                  Code Review:
-                </span>{" "}
-                AI suggests improvements.
-              </p>
-              <p>
-                <span className="text-green-400 font-semibold">
-                  Download PDF:
-                </span>{" "}
-                Export formatted code.
-              </p>
+              <p><span className="text-green-400 font-semibold">Run Code:</span> Execute your code instantly.</p>
+              <p><span className="text-blue-400 font-semibold">Code Assistant:</span> Debug & optimize code.</p>
+              <p><span className="text-indigo-400 font-semibold">Room Chat:</span> Collaborate live.</p>
+              <p><span className="text-purple-400 font-semibold">Code Review:</span> Get AI suggestions.</p>
+              <p><span className="text-green-400 font-semibold">PDF Export:</span> Save formatted output.</p>
 
               <button
-                className="mt-4 w-full py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition"
+                className="mt-4 w-full py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400"
                 onClick={() => setShowShareInfo(false)}
               >
                 Back
@@ -172,40 +183,80 @@ const ActionView = ({ editorRef, languageId, language }) => {
             </div>
           ) : (
             <div className="flex flex-col items-center w-full">
+ 
               <button
-                className="w-[60%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition mb-4"
+                className="w-[60%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg mb-4"
                 onClick={() => setShowShareRoomOptions(true)}
               >
                 Share Room
               </button>
-
+ 
               {showShareRoomOptions && (
-                <div className="flex gap-3 mb-4 w-full justify-center">
-                  <button className="w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
-                    Read Only
-                  </button>
+                <div className="flex flex-col items-center gap-3 mb-4 w-full">
 
-                  <button className="w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
-                    Read / Write
-                  </button>
+                  <div className="flex gap-3 w-full justify-center">
+
+                    <button
+                      className="w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      onClick={() => handleGenerateLink("read")}
+                    >
+                      Read Only
+                    </button>
+
+                    <button
+                      className="w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      onClick={() => handleGenerateLink("write")}
+                    >
+                      Read / Write
+                    </button>
+
+                  </div>
+ 
+                  {linkLoading ? (
+                    <div className="text-blue-400 text-sm mt-2">Generating link...</div>
+                  ) : (
+                    shareLink && (
+                      <div className="w-full p-3 bg-black/40 border border-gray-600 rounded-lg mt-2 flex flex-col items-center">
+                        <p className="text-xs text-gray-300 break-all text-center">{shareLink}</p>
+
+                        <button
+                          className="mt-2 px-4 py-1 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
+                          onClick={() => {
+                            navigator.clipboard.writeText(shareLink);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1500);
+                          }}
+                        >
+                          Copy Link
+                        </button>
+
+                        {copied && (
+                          <div className="mt-2 text-green-400 text-xs font-semibold">
+                            ✓ Copied!
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+
                 </div>
               )}
-
-              {/* DOWNLOAD PDF BUTTON */}
+ 
               <button
-                className={`w-[60%] py-3 rounded-lg transition text-white font-semibold
-                  ${
-                    isDownloading
-                      ? "bg-gray-500 cursor-wait opacity-70"
-                      : "bg-green-600 hover:bg-green-500"
-                  }`}
+                className={`w-[60%] py-3 rounded-lg text-white font-semibold ${
+                  isDownloading
+                    ? "bg-gray-500 cursor-wait opacity-70"
+                    : "bg-green-600 hover:bg-green-500"
+                }`}
                 disabled={isDownloading}
                 onClick={handleDownloadPDF}
               >
                 {isDownloading ? "Generating..." : "Download as PDF"}
               </button>
+
             </div>
           )}
+
         </div>
       )}
     </div>
