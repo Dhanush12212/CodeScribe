@@ -3,6 +3,7 @@ import hljs from "highlight.js";
 import puppeteer from "puppeteer";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getCodeHeadline } from "../utils/gemini.utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,11 +21,14 @@ const exportPDF = async (req, res) => {
       String(today.getMonth() + 1).padStart(2, "0") + "/" +
       today.getFullYear();
 
+    const headline = await getCodeHeadline(code, language);
+
     const html = await ejs.renderFile(
       path.join(__dirname, "../views/CodeTemplate.ejs"),
       {
         highlightedCode,
         language: safeLang,
+        headline,
         createdOn: formattedDate,
       }
     );
