@@ -7,16 +7,19 @@ import cors from 'cors';
 import http from 'http'; 
 
 import AuthRoute from './routes/auth.routes.js';
-import CodeRunnerRoute from './routes/codeRunner.route.js';
+import CodeRunnerRoute from './routes/codeRunner.routes.js';
 import connectDB from './db/connectDB.js'; 
 import initSocket from './socket/socket.js';
-import codeAssistantRoute from './routes/codeAssistant.route.js';
+import codeAssistantRoute from './routes/codeAssistant.routes.js';
 import pdfExportroute from './routes/pdfExport.routes.js';
 import roomRouter from './routes/room.route.js';
 import { verifyJWT } from './middleware/auth.middleware.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+
+const LOCAL_URL = process.env.LOCAL_URL;
+const PRODUCTION_URL = process.env.PRODUCTION_URL;
 
 const httpServer = http.createServer(app);
 
@@ -26,7 +29,7 @@ initSocket(httpServer);
 app.use(express.json());
 app.use(cookieParser()); 
 app.use(cors({
-    origin: ['http://localhost:5173', "https://codescribe-alpha.vercel.app"],
+    origin: [LOCAL_URL, PRODUCTION_URL],
     credentials: true,
 }));
 

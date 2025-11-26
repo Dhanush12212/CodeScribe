@@ -91,13 +91,13 @@ function RoomChat() {
   };
 
   useEffect(() => {
-  if (inputRef.current) {
-    inputRef.current.style.height = "36px"; 
-    inputRef.current.style.height = inputRef.current.scrollHeight + "px";
-  }
-}, [input]);
+    if (inputRef.current) {
+      inputRef.current.style.height = "36px"; 
+      inputRef.current.style.height = inputRef.current.scrollHeight + "px";
+    }
+  }, [input]);
 
-useEffect(() =>  inputRef.current?.focus(), []); 
+  useEffect(() =>  inputRef.current?.focus(), []); 
 
   return (
     <div

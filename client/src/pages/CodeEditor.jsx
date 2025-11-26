@@ -7,33 +7,27 @@ import { ChevronDown } from "lucide-react";
 import ActionView from "./ActionView";
 import axios from "axios";
 import { API_URL } from "../../config";
-import AIPromptModal from "../components/UI/AIPromptModel";
+import AIPromptModal from "../components/UI/AIPromptModel"; 
+import { Local, Session } from "../utils/storage";
 
-export const Session = {
-  set(key, value) {
-    const tabKey = `${window.name}-${key}`;
-    sessionStorage.setItem(tabKey, JSON.stringify(value));
-  },
-  get(key) {
-    const tabKey = `${window.name}-${key}`;
-    const value = sessionStorage.getItem(tabKey);
-    return value ? JSON.parse(value) : null;
-  },
-  remove(key) {
-    const tabKey = `${window.name}-${key}`;
-    sessionStorage.removeItem(tabKey);
-  },
-};
-
-function CodeEditor({ roomId }) {
+function CodeEditor({ roomId }) { 
+  
   const [loading, setLoading] = useState(false);
-  const [language, setLanguage] = useState("java");
+
+  const [language, setLanguage] = useState(() => {
+    return Local.get(`language-${roomId}`) || "java";
+  });
   const [languageId, setLanguageId] = useState(LANGUAGE_IDS["java"]);
-  const [theme, setTheme] = useState("vs-dark");
+
+  const [theme, setTheme] = useState(() => {
+    return Local.get("editor-theme") || "vs-dark";
+  });
+
   const [themeOpen, setThemeOpen] = useState(false);
   const [isDebugging, setIsDebugging] = useState(false);
   const [promptShow, setPromptShow] = useState(false);
   const [AIPrompt, setAIPrompt] = useState("");
+  const isLanguageChange = useRef(false);
 
   const [fontSize, setFontSize] = useState(() => {
     if (window.innerWidth >= 1024) return 15;
@@ -49,8 +43,17 @@ function CodeEditor({ roomId }) {
   const latestCodeRef = useRef("");
   const isRemoteUpdate = useRef(false);
 
-  const initialLoad = useRef(true);
-  const firstSocketSyncDone = useRef(false);
+  const initialLoad = useRef(true); 
+
+  const savedCode = Session.get(`editor-code-${roomId}`);
+
+  useEffect(() => {
+    Local.set(`language-${roomId}`, language);
+  }, [language, roomId]);
+
+  useEffect(() => {
+    Local.set("editor-theme", theme);
+  }, [theme]);
 
   const handleDebug = async () => {
     const currentCode = editorRef.current?.getValue();
@@ -68,8 +71,8 @@ function CodeEditor({ roomId }) {
       if (response.status === 200 && debuggedCode) {
         isRemoteUpdate.current = true;
         editorRef.current.setValue(debuggedCode);
-        latestCodeRef.current = debuggedCode;
-        Session.set(`code-${roomId}`, debuggedCode);
+        latestCodeRef.current = debuggedCode; 
+        Session.set(`editor-code-${roomId}`, debuggedCode);
         setTimeout(() => (isRemoteUpdate.current = false), 120);
       }
     } finally {
@@ -79,6 +82,11 @@ function CodeEditor({ roomId }) {
   };
 
   useEffect(() => {
+    Session.setRoom(roomId);
+    Session.set(`editor-code-${roomId}`, null);
+  }, [roomId]);
+
+  useEffect(() => {
     if (!roomId) return;
     if (!socket.connected) socket.connect();
 
@@ -86,42 +94,42 @@ function CodeEditor({ roomId }) {
       socket.emit("joinRoom", roomId);
     });
 
-    const localSenderId = senderId.current; 
-      socket.on("languageChange", ({ roomId: updatedRoomId, language: newLang }) => {
-      if (initialLoad.current) return;
+    socket.on("languageChange", ({ roomId: updatedRoomId, language: newLang, senderId: remote }) => {
       if (updatedRoomId !== roomId) return;
-        
-      if (newLang === language) return;
-        
+
       setLanguage(newLang);
-      setLanguageId(LANGUAGE_IDS[newLang]); 
+      setLanguageId(LANGUAGE_IDS[newLang]);
+ 
+      if (!isLanguageChange.current) {
+        const newCode = CODE_SNIPPETS[newLang];
+        if (editorRef.current) {
+          isRemoteUpdate.current = true;
+          editorRef.current.setValue(newCode);
+          latestCodeRef.current = newCode; 
+          Session.set(`editor-code-${roomId}`, newCode);
+          setTimeout(() => (isRemoteUpdate.current = false), 100);
+        }
+      }
     });
 
     socket.on("updatedCode", ({ roomId: updatedRoomId, code, senderId: remoteId }) => {
-      if (initialLoad.current) return;
-
-      if (updatedRoomId === roomId && remoteId !== localSenderId) {
-        const editor = editorRef.current;
-        if (!editor) return;
-
-        const cursor = editor.getPosition();
-        isRemoteUpdate.current = true;
-
-        latestCodeRef.current = code;
-        editor.setValue(code);
-
-        try {
-          editor.getAction("editor.action.formatDocument").run();
-        } catch {}
-
-        if (cursor) editor.setPosition(cursor);
-
-        Session.set(`code-${roomId}`, code);
-
-        setTimeout(() => (isRemoteUpdate.current = false), 120);
-
-        firstSocketSyncDone.current = true;
-      }
+      if (initialLoad.current) return;  
+    
+      if (updatedRoomId !== roomId || remoteId === senderId.current) return;
+    
+      const editor = editorRef.current;
+      if (!editor) return;
+    
+      const cursor = editor.getPosition();
+      isRemoteUpdate.current = true;
+    
+      editor.setValue(code);
+      latestCodeRef.current = code;
+      Session.set(`editor-code-${roomId}`, code);
+    
+      if (cursor) editor.setPosition(cursor);
+     
+      setTimeout(() => (isRemoteUpdate.current = false), 120);
     });
 
     return () => {
@@ -132,10 +140,10 @@ function CodeEditor({ roomId }) {
 
   const handleOnChange = useCallback(
     (newCode) => {
-      if (!newCode || isRemoteUpdate.current) return;
+      if (isRemoteUpdate.current || typeof newCode !== "string") return;
 
-      latestCodeRef.current = newCode;
-      Session.set(`code-${roomId}`, newCode);
+      latestCodeRef.current = newCode; 
+      Session.set(`editor-code-${roomId}`, newCode);
 
       socket.emit("updatedCode", {
         roomId,
@@ -144,9 +152,11 @@ function CodeEditor({ roomId }) {
       });
     },
     [roomId]
-  );
+  ); 
 
   const onSelectLanguage = (selectedLanguage, id) => {
+    isLanguageChange.current = true;
+
     setLanguage(selectedLanguage);
     setLanguageId(id);
 
@@ -154,8 +164,8 @@ function CodeEditor({ roomId }) {
     isRemoteUpdate.current = true;
 
     editorRef.current.setValue(newCode);
-    latestCodeRef.current = newCode;
-    Session.set(`code-${roomId}`, newCode);
+    latestCodeRef.current = newCode; 
+    Session.set(`editor-code-${roomId}`, newCode);
 
     setTimeout(() => (isRemoteUpdate.current = false), 120);
 
@@ -164,6 +174,10 @@ function CodeEditor({ roomId }) {
       language: selectedLanguage,
       senderId: senderId.current,
     });
+
+    setTimeout(() => {
+      isLanguageChange.current = false;
+    }, 200);
   };
 
   const onSelectTheme = (selectedTheme) => {
@@ -184,20 +198,19 @@ function CodeEditor({ roomId }) {
   const onMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
-
-    const savedCode = Session.get(`code-${roomId}`);
-    const initialCode = savedCode ?? CODE_SNIPPETS[language];
-
-    initialLoad.current = true;
-    editor.setValue(initialCode);
-    latestCodeRef.current = initialCode;
-    Session.set(`code-${roomId}`, initialCode);
-
-    setTimeout(() => {
+  
+    initialLoad.current = true; 
+    setTimeout(() => { 
+      console.log("Saved Code after Mount: ",savedCode);
+      const initialCode = savedCode ?? CODE_SNIPPETS[language];
+    
       initialLoad.current = false;
-    }, 400);
-
-    editor.focus();
+      editor.setValue(initialCode);
+      latestCodeRef.current = initialCode;
+      Session.set(`editor-code-${roomId}`, initialCode);
+    
+      editor.focus();
+    }, 500);
   };
 
   useEffect(() => {
@@ -240,8 +253,7 @@ function CodeEditor({ roomId }) {
       isRemoteUpdate.current = true;
       editorRef.current.setValue(updatedCode);
       latestCodeRef.current = updatedCode;
-
-      Session.set(`code-${roomId}`, updatedCode);
+      Session.set(`editor-code-${roomId}`, updatedCode);
 
       socket.emit("updatedCode", {
         roomId,

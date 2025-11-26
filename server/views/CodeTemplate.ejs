@@ -8,22 +8,29 @@
 
         body {
             font-family: "Fira Code", monospace;
-            padding: 20px;
+            padding: 15px 25px;
             background: #fafafa;
             color: #000;
         }
-
-        h2 {
-            margin-bottom: 15px;
+ 
+        .brand {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #444;
             font-family: Arial, Helvetica, sans-serif;
         }
-
-        .meta {
-            font-size: 13px;
+ 
+        .headline {
+            font-size: 19px;
+            margin-top: 60px;
             margin-bottom: 20px;
-            color: #333;
-            display:flex;
-            justify-content: space-between;
+            font-weight: bold;
+            color: #222;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
         pre {
@@ -35,8 +42,17 @@
             white-space: pre-wrap;
             word-break: break-word;
             overflow-x: hidden;
-        }
- 
+            margin-bottom: 20px;
+        } 
+        
+        .footer-date {
+            text-align: right;
+            font-size: 13px;
+            margin-top: 10px;
+            color: #555;
+            font-family: Arial, Helvetica, sans-serif;
+        } 
+
         .hljs-keyword { color: #c678dd; }
         .hljs-string { color: #98c379; }
         .hljs-number { color: #d19a66; }
@@ -48,17 +64,18 @@
 </head>
 
 <body>
-    <h2>CodeScribe Code</h2>
-
-    <div class="meta">
-        <div>
-            <strong>Language:</strong> <%= language %><br>
-        </div>
-        <div>
-            <strong>Generated On:</strong> <%= createdOn %>
-        </div>
+ 
+    <div class="brand">CodeScribe</div> 
+ 
+    <div class="headline">
+        <%= headline %>
+    </div>
+ 
+    <pre><code class="hljs"><%- highlightedCode %></code></pre>
+ 
+    <div class="footer-date">
+        Created On: <%= createdOn %>
     </div>
 
-    <pre><code class="hljs"><%- highlightedCode %></code></pre>
 </body>
 </html>

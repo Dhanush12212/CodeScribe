@@ -13,6 +13,13 @@ export const runReviewCode = async (code) => {
       "reasoning": ""
     }
 
+    IMPORTANT RULES (strict):
+      - For C:
+          • Do NOT split string literals across multiple lines.
+          • Keep printf/puts/Console.WriteLine strings in a SINGLE line.
+          • If the string contains a newline, write it as "\\n".
+          • Never break the quote in the middle.
+
     - Escape all double quotes inside optimized_code using \\"
     - No markdown, no backticks
     - Reasoning should be bullet points (*)

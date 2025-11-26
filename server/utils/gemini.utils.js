@@ -54,3 +54,24 @@ export const cleanupDebuggedCode = (code) => {
       .trim()
   );
 };
+
+export const getCodeHeadline = async (code, language) => {
+  const prompt = `
+    You are a coding assistant.
+    Analyze the following ${language} code and produce ONLY a short headline (max 7-10 words)
+    describing what the code does.
+
+    ❗ STRICT RULES:
+    - Return ONLY the headline.
+    - Do NOT add explanations.
+    - Do NOT wrap the output in quotes.
+    - Do NOT add markdown.
+
+    Code:
+    ${code}
+  `;
+
+  const headline = await askGemini(prompt);
+
+  return headline.trim();
+};
