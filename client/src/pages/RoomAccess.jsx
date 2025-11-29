@@ -301,7 +301,7 @@ function RoomAccess() {
           <div className="flex mt-3 items-center gap-4">
             <input
               type="text"
-              placeholder="Paste tokenized link or token..."
+              placeholder="Paste invite link.."
               className="outline-none text-white text-center px-4 py-3 lg:text-xl w-full rounded-md bg-transparent placeholder-gray-400"
               style={{ border: "1px solid rgba(255, 255, 255, 0.2)" }}
               value={roomId}

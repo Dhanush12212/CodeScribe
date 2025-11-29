@@ -21,39 +21,53 @@ const PORT = process.env.PORT || 8000;
 const LOCAL_URL = process.env.LOCAL_URL;
 const PRODUCTION_URL = process.env.PRODUCTION_URL;
 
-const httpServer = http.createServer(app);
+const allowedOrigins = [LOCAL_URL, PRODUCTION_URL];
+ 
+app.use(
+  cors({
+    origin: function (origin, callback) { 
+      if (!origin) return callback(null, true);
 
-initSocket(httpServer);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
-// Middlewares
-app.use(express.json());
-app.use(cookieParser()); 
-app.use(cors({
-    origin: [LOCAL_URL, PRODUCTION_URL],
+      console.log("Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
-}));
+  })
+);
 
-// Routes
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
+app.use(express.json());
+app.use(cookieParser());
+
+const httpServer = http.createServer(app);
+initSocket(httpServer, allowedOrigins);
+
 app.use('/api/v1/auth', AuthRoute);
 
 app.use(verifyJWT);
 app.use('/api/v1/execute', CodeRunnerRoute);
-app.use('/api/v1/codeAssistant', codeAssistantRoute); 
-app.use("/api/v1/room", roomRouter);
-app.use("/api/v1/export", pdfExportroute);
+app.use('/api/v1/codeAssistant', codeAssistantRoute);
+app.use('/api/v1/room', roomRouter);
+app.use('/api/v1/export', pdfExportroute);
 
-
-// Start Server
 const startServer = async () => {
-    try {
-        await connectDB();
-        httpServer.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server running on port ${PORT}`);
-        });
-    } catch (error) {
-        console.error(`Server failed: ${error.message}`);
-        process.exit(1);
-    }
+  try {
+    await connectDB();
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error(`Server failed: ${error.message}`);
+    process.exit(1);
+  }
 };
 
 startServer();

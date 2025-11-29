@@ -1,10 +1,11 @@
 import { Server } from "socket.io";
 import { rooms, roomMessages } from "./room.js";
+import { getBaseUrl } from "../utils/env.js";   
 
 export default function initSocket(httpServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: ["http://localhost:5173"],
+      origin: [getBaseUrl()],            
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -14,9 +15,7 @@ export default function initSocket(httpServer) {
     console.log(`User connected: ${socket.id}`);
 
     socket.on("joinRoom", (roomId) => { 
-      if (!roomId) { 
-        return;
-      }
+      if (!roomId) return;
 
       if (!rooms.has(roomId)) {  
         socket.emit("error", { message: "Room does not exist" });
@@ -73,7 +72,6 @@ export default function initSocket(httpServer) {
     });
 
     socket.on("createRoom", ({ roomId, code, language }) => { 
-
       if (rooms.has(roomId)) { 
         socket.emit("error", { message: "Room already exists" });
         return;
