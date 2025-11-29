@@ -327,7 +327,9 @@ function CodeEditor() {
           language={language}
           onMount={onMount}
           onChange={handleOnChange}
+          className={access !== "write" ? "readonly" : ""}
         />
+
       </div>
 
       <div className="w-full custom-xl:w-1/2 h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
@@ -349,13 +351,25 @@ function CodeEditor() {
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fadeIn { animation: fadeIn 0.15s ease-out; }
+      
         @media (min-width: 1200px) {
           .custom-xl\\:flex-row { flex-direction: row !important; }
           .custom-xl\\:w-3\\/4 { width: 75% !important; }
           .custom-xl\\:w-1\\/2 { width: 50% !important; }
           .custom-xl\\:h-\\[90vh\\] { height: 90vh !important; }
         }
+       
+        .readonly .monaco-editor .cursor {
+          display: none !important;
+        }
+              
+        .readonly .monaco-editor {
+          pointer-events: none !important;
+          user-select: none !important;
+          cursor: not-allowed !important;
+        }
       `}</style>
+
     </div>
   );
 }

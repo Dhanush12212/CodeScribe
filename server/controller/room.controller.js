@@ -3,42 +3,40 @@ import { encryptAccess } from "../utils/accessToken.utils.js";
 import { getBaseUrl } from "../utils/env.js";
 
 const createRoomController = (req, res) => {
-  const { roomId, userId } = req.body;
-  if (!roomId || !userId) return res.status(400).json({ error: "Missing roomId or userId" });
+  const { roomId } = req.body;
+  if (!roomId) return res.status(400).json({ error: "Missing roomId" });
 
-  createRoom(roomId, userId);
+  createRoom(roomId);  
 
   const token = encryptAccess({
     roomId,
-    access: "write",
-    userId,
-    expires: Date.now() + 12 * 60 * 60 * 1000, 
+    access: "write", 
+    expires: Date.now() + 12 * 60 * 60 * 1000,  
   });
 
   return res.json({ success: true, token });
 };
- 
+
 const generateRoomLink = async (req, res) => {
   try {
-    const { roomId, access, userId } = req.body;
-    if (!roomId || !access || !userId) {
-      return res.status(400).json({ error: "Missing roomId or access or userId" });
+    const { roomId, access } = req.body;
+    if (!roomId || !access) {
+      return res.status(400).json({ error: "Missing roomId or access" });
     }
-
-    const room = rooms.get(roomId); 
-    const finalAccess = room?.owner === userId ? "write" : access;
+ 
+    const validAccessTypes = ["write", "read"];
+    if (!validAccessTypes.includes(access)) {
+      return res.status(400).json({ error: "Invalid access type" });
+    }
 
     const token = encryptAccess({
       roomId,
-      access: finalAccess,
-      userId,
-      expires: Date.now() + 12 * 60 * 60 * 1000,
+      access,
+      expires: Date.now() + 12 * 60 * 60 * 1000,  
     });
 
     const baseUrl = getBaseUrl();
-    const url = `${baseUrl}/CodeScribe?token=${encodeURIComponent(
-      token
-    )}`;
+    const url = `${baseUrl}/CodeScribe?token=${encodeURIComponent(token)}`;
     res.json({ url, token });
   } catch (err) {
     console.error("generateRoomLink error:", err);

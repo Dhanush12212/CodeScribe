@@ -147,7 +147,7 @@ function RoomAccess() {
     try {
       const res = await axios.post(
         `${API_URL}/room/createRoom`,
-        { roomId: newRoomId, userId },
+        { roomId: newRoomId },
         { withCredentials: true }
       ); 
 

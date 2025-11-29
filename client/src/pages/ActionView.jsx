@@ -6,8 +6,7 @@ import RoomChat from "../components/Actions/RoomChat";
 import CodeReview from "../components/Actions/CodeReview";
 import ActionButtons from "../components/UI/ActionButtons";
 import { API_URL } from "../../config";
-import axios from "axios";
-import { useAuth } from "../components/Contexts/AuthContext.jsx";
+import axios from "axios"; 
 
 const ActionView = ({ editorRef, languageId, language }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
@@ -18,10 +17,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [shareLink, setShareLink] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const { user, setUser } = useAuth();
-
+  const [copied, setCopied] = useState(false); 
   const popupRef = useRef(null);
 
   const getRoomIdFromToken = async () => {
@@ -55,21 +51,25 @@ const ActionView = ({ editorRef, languageId, language }) => {
     try {
       setLinkLoading(true);
       setShareLink("");
-
+    
       const roomId = await getRoomIdFromToken();
       if (!roomId) {
         alert("Room ID could not be determined!");
         return;
       }
-
-      const userId = user?._id;
-
+    
+      if (requestedAccess === "write") {
+        const currentUrl = window.location.href;
+        setShareLink(currentUrl);
+        return;
+      }
+    
       const res = await axios.post(
         `${API_URL}/room/generateLink`,
-        { roomId, access: requestedAccess, userId },
+        { roomId, access: "read" },
         { withCredentials: true }
       );
-
+    
       setShareLink(res.data.url);
     } catch (err) {
       console.error(err);
