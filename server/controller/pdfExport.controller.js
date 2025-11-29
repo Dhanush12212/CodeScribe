@@ -17,25 +17,31 @@ const exportPDF = async (req, res) => {
 
     const today = new Date();
     const formattedDate =
-      String(today.getDate()).padStart(2, "0") + "/" +
-      String(today.getMonth() + 1).padStart(2, "0") + "/" +
+      String(today.getDate()).padStart(2, "0") +
+      "/" +
+      String(today.getMonth() + 1).padStart(2, "0") +
+      "/" +
       today.getFullYear();
 
     const headline = await getCodeHeadline(code, language);
 
-    const html = await ejs.renderFile(
-      path.join(__dirname, "../views/CodeTemplate.ejs"),
-      {
-        highlightedCode,
-        language: safeLang,
-        headline,
-        createdOn: formattedDate,
-      }
-    );
+    const templatePath = path.resolve(process.cwd(), "views/CodeTemplate.ejs");
+
+    const html = await ejs.renderFile(templatePath, {
+      highlightedCode,
+      language: safeLang,
+      headline,
+      createdOn: formattedDate,
+    });
 
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        "--disable-setuid-sandbox",
+      ],
     });
 
     const page = await browser.newPage();
@@ -44,20 +50,20 @@ const exportPDF = async (req, res) => {
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "20mm", bottom: "20mm", left: "15mm", right: "15mm" },
+      margin: {
+        top: "20mm",
+        bottom: "20mm",
+        left: "15mm",
+        right: "15mm",
+      },
     });
 
-    await browser.close(); 
+    await browser.close();
+
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="Code.pdf"'
-    );
-    
+    res.setHeader("Content-Disposition", 'attachment; filename="Code.pdf"');
     return res.end(pdfBuffer);
-    
   } catch (err) {
-    console.error("PDF ERROR:", err);
     return res.status(500).json({ error: "PDF generation failed" });
   }
 };
