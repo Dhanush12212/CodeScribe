@@ -5,23 +5,32 @@ import { Session, Local } from "../../utils/storage";
 import { useAuth } from "../Contexts/AuthContext";
 
 function RoomChat() {
-
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   const username = user?.username || "Anonymous";
 
-  const [roomId] = useState(() => {
-    return Local.get('roomId') || "";
-  });
-  
-  const [messages, setMessages] = useState(() => {
-    return Session.get(`messages-${roomId}`) || [] ;
-  });
+  const [roomId, setRoomId] = useState("");
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const stored = Local.get("roomId"); 
+    if (stored) setRoomId(stored);
+  }, []);
+
+  useEffect(() => {
+    if (!roomId) return;
+
+    const saved = Session.get(`messages-${roomId}`); 
+
+    if (saved && saved.length > 0) {
+      setMessages(saved);
+    }
+  }, [roomId]);
 
   const [onlineCount, setOnlineCount] = useState(0);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
- 
-  const messagesContainerRef = useRef(null); 
+
+  const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -32,52 +41,86 @@ function RoomChat() {
   };
 
   useEffect(() => {
+    if (!roomId) return;
+    if (messages.length === 0) return;
+ 
     Session.set(`messages-${roomId}`, messages);
   }, [messages, roomId]);
 
-
   useEffect(() => {
     if (!roomId) return;
-
+ 
     socket.emit("joinRoom", roomId);
 
-    socket.on("chatHistory", (history) => {
-      const existing = Session.get(`messages-${roomId}`);
+    const handleChatHistory = (history) => { 
 
-      if (!existing || existing.length === 0) {
-        setMessages(history);
+      const saved = Session.get(`messages-${roomId}`);
+
+      if (!saved || saved.length === 0) { 
+        setMessages((prev) => {
+          const uniqueMessages = history.filter(
+            (msg) => !prev.some((p) => p.timestamp === msg.timestamp && p.text === msg.text)
+          );
+          const updatedMessages = [...prev, ...uniqueMessages];
+          Session.set(`messages-${roomId}`, updatedMessages); 
+          return updatedMessages;
+        });
+      } else { 
+        setMessages(saved);
       }
-    
-      scrollToBottom();
-    });
 
-    socket.on("receiveMessage", (msg) => {
-      setMessages((prev) => [...prev, msg]);
       scrollToBottom();
-    });
+    };
 
-    socket.on("roomMembers", (count) => {
+    const handleReceiveMessage = (msg) => { 
+
+      setMessages((prev) => {
+        if (prev.some((p) => p.timestamp === msg.timestamp && p.text === msg.text)) {
+          return prev; 
+        }
+        const updatedMessages = [...prev, msg];
+        Session.set(`messages-${roomId}`, updatedMessages);  
+        return updatedMessages;
+      });
+      scrollToBottom();
+    };
+
+    const handleRoomMembers = (count) => { 
       setOnlineCount(count);
-    });
+    };
+
+    socket.on("chatHistory", handleChatHistory);
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("roomMembers", handleRoomMembers);
 
     return () => {
-      socket.off("chatHistory");
-      socket.off("receiveMessage");
-      socket.off("roomMembers");  
+      socket.off("chatHistory", handleChatHistory);
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("roomMembers", handleRoomMembers);
     };
   }, [roomId]);
 
   const handleSend = (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim()) { 
+      return;
+    } 
 
     setSending(true);
 
-    socket.emit("sendMessage", {
+    const message = {
       roomId,
       sender: username,
       text: input.trim(),
+      timestamp: Date.now(),
+    }; 
+    setMessages((prev) => {
+      const updatedMessages = [...prev, message];
+      Session.set(`messages-${roomId}`, updatedMessages);
+      return updatedMessages;
     });
+
+    socket.emit("sendMessage", message);
 
     setInput("");
     setTimeout(() => setSending(false), 300);
@@ -92,12 +135,12 @@ function RoomChat() {
 
   useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.style.height = "36px"; 
+      inputRef.current.style.height = "36px";
       inputRef.current.style.height = inputRef.current.scrollHeight + "px";
     }
   }, [input]);
 
-  useEffect(() =>  inputRef.current?.focus(), []); 
+  useEffect(() => inputRef.current?.focus(), []);
 
   return (
     <div
@@ -108,7 +151,6 @@ function RoomChat() {
         overflow: "hidden",
       }}
     >
-      {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3"
         style={{
@@ -117,12 +159,13 @@ function RoomChat() {
         }}
       >
         <h2 className="text-lg font-semibold text-white">💬 Room Chat</h2>
-        <p className="text-green-500 text-sm textce whitespace-nowrap">👥Online: {onlineCount}</p>
+        <p className="text-green-500 text-sm whitespace-nowrap">
+          👥Online: {onlineCount}
+        </p>
       </div>
 
-      {/* Messages */}
       <div
-        ref={messagesContainerRef}  
+        ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 flex flex-col space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
         style={{
           scrollbarWidth: "thin",
@@ -138,28 +181,29 @@ function RoomChat() {
               }`}
             >
               <div
-                className={`rounded-2xl py-1 px-4 min-w-[150px] text-sm shadow-md  transition-all duration-300 ${
+                className={`rounded-2xl py-1 px-4 min-w-[150px] text-sm shadow-md transition-all duration-300 ${
                   msg.sender === username
                     ? "bg-blue-700 text-white"
                     : "bg-gray-800 text-gray-100"
                 }`}
                 style={{
-                  border: msg.sender === username ? "1px solid #3b82f6" : "1px solid #374151",
+                  border:
+                    msg.sender === username
+                      ? "1px solid #3b82f6"
+                      : "1px solid #374151",
                 }}
               >
-              
                 <div className="font-semibold text-xs opacity-80">
                   {msg.sender}
                 </div>
                 <p className="whitespace-pre-wrap leading-relaxed font-md text-lg">
                   {msg.text}
-                </p>
+                </p> 
                 <div className="text-[10px] text-gray-400 mt-1 text-right">
-                  {new Date(msg.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
+                  {msg.timestamp
+                    ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                    : ""}
+                </div> 
               </div>
             </div>
           ))
@@ -170,7 +214,6 @@ function RoomChat() {
         )}
       </div>
 
-      {/* Input */}
       <form
         onSubmit={handleSend}
         className="p-3 flex gap-2 sticky bottom-0"
@@ -179,19 +222,19 @@ function RoomChat() {
           borderTop: "1px solid #374151",
         }}
       >
-        <textarea 
-          value={input} 
+        <textarea
+          value={input}
           ref={inputRef}
-          onChange={(e) => setInput(e.target.value)} 
+          onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type your message..." 
+          placeholder="Type your message..."
           className="flex-1 outline-none text-white rounded-md px-3 py-3 resize-none overflow-hidden text-base"
           style={{
             backgroundColor: "#374151",
             border: "1px solid #4b5563",
             minHeight: "36px",
-          }} 
-        /> 
+          }}
+        />
         <button
           type="submit"
           disabled={sending}

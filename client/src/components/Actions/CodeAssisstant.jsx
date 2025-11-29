@@ -155,7 +155,9 @@ function CodeAssistant() {
                 {msg.role === "assistant" && (
                   <div className="flex flex-col space-y-4">
                     {msg.explanation && (
-                      <div className="bg-gray-900 p-4 rounded-xl border border-gray-700 shadow-inner animate-fade-in">
+                      <div className="bg-gray-900 p-4 rounded-xl shadow-inner animate-fade-in" 
+                        style={{ border: "1px solid #374151" }}
+                      >
                         <h3 className="text-yellow-400 font-semibold mb-2">
                           🧠 Explanation
                         </h3>
@@ -166,7 +168,9 @@ function CodeAssistant() {
                     )}
  
                   {msg.code && (
-                    <div className="bg-[#0d1117] p-4 rounded-xl border border-gray-700 shadow-inner overflow-x-auto relative animate-fade-in">
+                    <div className="bg-[#0d1117] p-4 rounded-xl shadow-inner overflow-x-auto relative animate-fade-in"
+                      style={{ border: "1px solid #374151" }}
+                    >
                       <h3 className="text-blue-400 font-semibold mb-2 flex items-center justify-between">
                         <span>💻 Code</span>
                   
