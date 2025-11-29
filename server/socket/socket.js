@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { rooms, roomMessages } from "./room.js"; 
+import { rooms, roomMessages } from "./room.js";
 
 export default function initSocket(httpServer) {
   const io = new Server(httpServer, {
@@ -13,41 +13,40 @@ export default function initSocket(httpServer) {
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}`);
 
-    socket.on("joinRoom", (roomId) => {
-      if (!roomId) return;
- 
-      if (!rooms.has(roomId)) {
-        rooms.set(roomId, { code: "", language: "java" });
-        // console.log(`Auto-created room: ${roomId}`);
+    socket.on("joinRoom", (roomId) => { 
+      if (!roomId) { 
+        return;
       }
 
+      if (!rooms.has(roomId)) {  
+        socket.emit("error", { message: "Room does not exist" });
+        return;
+      }
+ 
       socket.join(roomId);
       const { code, language } = rooms.get(roomId);
-      // console.log(`[Server] ${socket.id} joined room ${roomId}`);
 
       const totalUsers = io.sockets.adapter.rooms.get(roomId)?.size || 0; 
       io.to(roomId).emit("roomMembers", totalUsers);
-      
+
       socket.emit("roomJoined", { roomId });
       socket.emit("updatedCode", { roomId, code, senderId: "server" });
       socket.emit("languageChange", { roomId, language });
-
-      //Send Chat History when user joined
-      const chatHistory = roomMessages.get(roomId) || [];
+ 
+      const chatHistory = roomMessages.get(roomId) || []; 
       socket.emit("chatHistory", chatHistory);
     });
 
-socket.on("languageChange", ({ roomId, language }) => {
-  if (!rooms.has(roomId)) return;
+    socket.on("languageChange", ({ roomId, language }) => {
+      if (!rooms.has(roomId)) return;
 
-  rooms.get(roomId).language = language;
+      rooms.get(roomId).language = language;
 
-  io.to(roomId).emit("languageChange", {
-    roomId,
-    language,
-  });
-});
-
+      io.to(roomId).emit("languageChange", {
+        roomId,
+        language,
+      });
+    });
 
     socket.on("updatedCode", ({ roomId, code, senderId }) => {
       if (!rooms.has(roomId)) return;
@@ -55,12 +54,10 @@ socket.on("languageChange", ({ roomId, language }) => {
       socket.to(roomId).emit("updatedCode", { roomId, code, senderId });
     });
 
-    //Handle send Message
-    socket.on("sendMessage", ({ roomId, sender, text}) => {
-      if( !roomId || !text) return;
+    socket.on("sendMessage", ({ roomId, sender, text }) => {
+      if (!roomId || !text) return;
 
-      //Create message entry if none
-      if(!roomMessages.has(roomId)) {
+      if (!roomMessages.has(roomId)) {
         roomMessages.set(roomId, []);
       }
 
@@ -68,37 +65,36 @@ socket.on("languageChange", ({ roomId, language }) => {
         sender,
         text,
         timestamp: new Date(),
-      };
-      console.log("Received Message", message.text);
+      }; 
 
-      //Save to memory
       roomMessages.get(roomId).push(message);
-      
-      //BroadCast to all in room
-      io.to(roomId).emit('receiveMessage', message); 
+
+      io.to(roomId).emit("receiveMessage", message);
     });
 
+    socket.on("createRoom", ({ roomId, code, language }) => { 
 
-    //Clean Chats when user disconnects 
+      if (rooms.has(roomId)) { 
+        socket.emit("error", { message: "Room already exists" });
+        return;
+      }
+
+      rooms.set(roomId, { code: code || "", language: language || "javascript" });
+      roomMessages.set(roomId, []);
+ 
+      socket.emit("roomCreated", { roomId });
+    });
+
     socket.on("disconnecting", () => {
       socket.rooms.forEach((roomId) => {
         if (roomId !== socket.id) {
           const room = io.sockets.adapter.rooms.get(roomId);
-
-          // Calculate remaining users
           const totalUsers = room ? room.size - 1 : 0;
-         
-          io.to(roomId).emit("roomMembers", totalUsers);
 
-          // Cleanup chat history if room is empty
-          if (totalUsers <= 0) {
-            console.log(`Room ${roomId} is empty. Deleting chats...`);
-            roomMessages.delete(roomId);
-          }
+          io.to(roomId).emit("roomMembers", totalUsers); 
         }
       });
     });
-
 
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.id}`);
