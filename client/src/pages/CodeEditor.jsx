@@ -246,7 +246,7 @@ function CodeEditor() {
   }, []);
 
   return (
-    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300 force-min-width overflow-x-hidde">
+    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300 force-min-width overflow-x-hidden">
       <div className="relative w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50 text-white rounded-lg h-[98vh]">

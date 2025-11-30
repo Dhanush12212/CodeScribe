@@ -23,13 +23,13 @@
     "express": "^4.21.2",
     "google-auth-library": "^10.4.0",
     "highlight.js": "^11.11.1",
+    "html-pdf-node": "^1.0.8",
     "http": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
-    "puppeteer": "^23.3.0",
     "socket": "^0.14.57",
     "socket.io": "^4.8.1"
-  }, 
+  },
   "devDependencies": {
     "nodemon": "^3.1.9"
   }
