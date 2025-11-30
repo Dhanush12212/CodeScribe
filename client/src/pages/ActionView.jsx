@@ -6,18 +6,17 @@ import RoomChat from "../components/Actions/RoomChat";
 import CodeReview from "../components/Actions/CodeReview";
 import ActionButtons from "../components/UI/ActionButtons";
 import { API_URL } from "../../config";
-import axios from "axios"; 
+import axios from "axios";
 
 const ActionView = ({ editorRef, languageId, language }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
-
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showShareRoomOptions, setShowShareRoomOptions] = useState(false);
   const [showShareInfo, setShowShareInfo] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [shareLink, setShareLink] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
-  const [copied, setCopied] = useState(false); 
+  const [copied, setCopied] = useState(false);
   const popupRef = useRef(null);
 
   const getRoomIdFromToken = async () => {
@@ -31,7 +30,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
       );
 
       return res.data.roomId;
-    } catch (err) { 
+    } catch {
       return null;
     }
   };
@@ -42,8 +41,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
         setShowSharePopup(false);
       }
     };
-    if (showSharePopup)
-      document.addEventListener("mousedown", handleClickOutside);
+    if (showSharePopup) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showSharePopup]);
 
@@ -51,29 +49,18 @@ const ActionView = ({ editorRef, languageId, language }) => {
     try {
       setLinkLoading(true);
       setShareLink("");
-    
       const roomId = await getRoomIdFromToken();
-      if (!roomId) {
-        alert("Room ID could not be determined!");
-        return;
-      }
-    
+      if (!roomId) return;
       if (requestedAccess === "write") {
-        const currentUrl = window.location.href;
-        setShareLink(currentUrl);
+        setShareLink(window.location.href);
         return;
       }
-    
       const res = await axios.post(
         `${API_URL}/room/generateLink`,
         { roomId, access: "read" },
         { withCredentials: true }
       );
-    
       setShareLink(res.data.url);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to generate link");
     } finally {
       setLinkLoading(false);
     }
@@ -82,12 +69,9 @@ const ActionView = ({ editorRef, languageId, language }) => {
   const handleDownloadPDF = async () => {
     try {
       setShowSharePopup(false);
-
       const code = editorRef.current?.getValue();
-      if (!code) return alert("No code available to export!");
-
+      if (!code) return;
       setIsDownloading(true);
-
       const lang =
         editorRef.current?.getModel()?.getLanguageId() ||
         language ||
@@ -101,25 +85,20 @@ const ActionView = ({ editorRef, languageId, language }) => {
 
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
       a.download = `CodeScribe Code.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
-
       window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to generate PDF.");
     } finally {
       setIsDownloading(false);
     }
   };
 
   return (
-    <div className="flex flex-col w-full mt-2 relative min-w-[350px]">
+    <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative">
       {isDownloading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-50 text-white rounded-lg">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
@@ -137,14 +116,12 @@ const ActionView = ({ editorRef, languageId, language }) => {
         }}
       />
 
-      <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-2 relative">
+      <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative">
         <div className={activeComponent === "CodeRunner" ? "block" : "hidden"}>
           <CodeRunner editorRef={editorRef} languageId={languageId} />
         </div>
 
-        <div
-          className={activeComponent === "Code Assisstant" ? "block" : "hidden"}
-        >
+        <div className={activeComponent === "Code Assisstant" ? "block" : "hidden"}>
           <CodeAssisstant />
         </div>
 
@@ -161,12 +138,11 @@ const ActionView = ({ editorRef, languageId, language }) => {
         <div
           ref={popupRef}
           className="
-            absolute top-[60px] right-3
-            max-w-[380px]
-            w-[90vw]
-            sm:w-[60vw]
-            md:w-[40vw]
-            lg:w-[28vw]
+            absolute top-[60px] left-0 right-0 mx-auto
+            w-[100vw]
+            sm:w-[70vw]
+            md:w-[45vw]
+            lg:w-[30vw]
             rounded-xl p-5 shadow-2xl z-30
           "
           style={{
@@ -179,7 +155,6 @@ const ActionView = ({ editorRef, languageId, language }) => {
             <h3 className="text-lg font-semibold text-blue-400">
               {showShareInfo ? "Feature Information" : "Share Your Workspace"}
             </h3>
-
             <Info
               size={22}
               className="cursor-pointer text-yellow-400 hover:text-white transition"
@@ -189,29 +164,11 @@ const ActionView = ({ editorRef, languageId, language }) => {
 
           {showShareInfo ? (
             <div className="text-sm text-gray-300 space-y-3 leading-relaxed">
-              <p>
-                <span className="text-green-400 font-semibold">Run Code:</span>{" "}
-                Execute instantly.
-              </p>
-              <p>
-                <span className="text-blue-400 font-semibold">
-                  AI Assistant:
-                </span>{" "}
-                Improve and debug code.
-              </p>
-              <p>
-                <span className="text-indigo-400 font-semibold">Chat:</span>{" "}
-                Collaborate live.
-              </p>
-              <p>
-                <span className="text-purple-400 font-semibold">Review:</span>{" "}
-                AI suggestions.
-              </p>
-              <p>
-                <span className="text-green-400 font-semibold">PDF Export:</span>{" "}
-                Save formatted output.
-              </p>
-
+              <p><span className="text-green-400 font-semibold">Run Code:</span> Execute instantly.</p>
+              <p><span className="text-blue-400 font-semibold">AI Assistant:</span> Improve and debug code.</p>
+              <p><span className="text-indigo-400 font-semibold">Chat:</span> Collaborate live.</p>
+              <p><span className="text-purple-400 font-semibold">Review:</span> AI suggestions.</p>
+              <p><span className="text-green-400 font-semibold">PDF Export:</span> Save formatted output.</p>
               <button
                 className="mt-4 w-full py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400"
                 onClick={() => setShowShareInfo(false)}
@@ -222,7 +179,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
           ) : (
             <div className="flex flex-col items-center w-full">
               <button
-                className="w-[60%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg mb-4"
+                className="w-full sm:w-[60%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg mb-4"
                 onClick={() => setShowShareRoomOptions(true)}
               >
                 Share Room
@@ -230,16 +187,16 @@ const ActionView = ({ editorRef, languageId, language }) => {
 
               {showShareRoomOptions && (
                 <div className="flex flex-col items-center gap-3 mb-4 w-full">
-                  <div className="flex gap-3 w-full justify-center">
+                  <div className="flex gap-3 w-full justify-center flex-col sm:flex-row">
                     <button
-                      className="w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      className="w-full sm:w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                       onClick={() => handleGenerateLink("read")}
                     >
                       Read Only
                     </button>
 
                     <button
-                      className="w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      className="w-full sm:w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                       onClick={() => handleGenerateLink("write")}
                     >
                       Read / Write
@@ -247,9 +204,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
                   </div>
 
                   {linkLoading ? (
-                    <div className="text-blue-400 text-sm mt-2">
-                      Generating link...
-                    </div>
+                    <div className="text-blue-400 text-sm mt-2">Generating link...</div>
                   ) : (
                     shareLink && (
                       <div
@@ -260,21 +215,13 @@ const ActionView = ({ editorRef, languageId, language }) => {
                           {shareLink ? `${shareLink.slice(0, 50)}...` : ""}
                         </p>
 
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 flex-col sm:flex-row">
                           <button
                             className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
                             onClick={() => {
-                              if (!shareLink) {
-                                console.error("No link to copy");
-                                return;
-                              }
-                              try {
-                                navigator.clipboard.writeText(shareLink);
-                                setCopied(true);
-                                setTimeout(() => setCopied(false), 1500);
-                              } catch (err) {
-                                console.error("Failed to copy link:", err);
-                              }
+                              navigator.clipboard.writeText(shareLink);
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 1500);
                             }}
                           >
                             Copy Link
@@ -283,20 +230,13 @@ const ActionView = ({ editorRef, languageId, language }) => {
                             className="mt-2 px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-black text-sm rounded-md"
                             onClick={async () => {
                               if (navigator.share) {
-                                try {
-                                  await navigator.share({
-                                    title: "Join my CodeScribe Room",
-                                    text: "Here is your workspace link",
-                                    url: shareLink,
-                                  });
-                                } catch (err) {
-                                  console.log("Share failed:", err);
-                                }
+                                await navigator.share({
+                                  title: "Join my CodeScribe Room",
+                                  text: "Here is your workspace link",
+                                  url: shareLink,
+                                });
                               } else {
                                 navigator.clipboard.writeText(shareLink);
-                                alert(
-                                  "Sharing not supported. Link copied instead."
-                                );
                               }
                             }}
                           >
@@ -316,7 +256,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
               )}
 
               <button
-                className={`w-[60%] py-3 rounded-lg text-white font-semibold ${
+                className={`w-full sm:w-[60%] py-3 rounded-lg text-white font-semibold ${
                   isDownloading
                     ? "bg-gray-500 cursor-wait opacity-70"
                     : "bg-green-600 hover:bg-green-500"

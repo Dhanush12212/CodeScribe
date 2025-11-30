@@ -123,6 +123,15 @@ function RoomChat() {
 
   useEffect(() => inputRef.current?.focus(), []);
 
+  useEffect(() => {
+    if (inputRef.current) {
+      const el = inputRef.current;
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, []);
+
+
   return (
     <div
       className="relative h-[91vh] flex flex-col justify-between text-white rounded-lg"
@@ -189,17 +198,23 @@ function RoomChat() {
         <textarea
           value={input}
           ref={inputRef}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+          
+            const el = e.target;
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
+          }}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
           className="flex-1 outline-none text-white rounded-md px-3 py-3 resize-none overflow-hidden text-base"
           style={{
             backgroundColor: "#374151",
             border: "1px solid #4b5563",
-            minHeight: "36px",
+            minHeight: "36px", 
+            maxHeight: "150px",
           }}
         />
-
         <button
           type="submit"
           disabled={sending}
