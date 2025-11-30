@@ -208,7 +208,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
                         {shareLink ? `${shareLink.slice(0, 50)}...` : ""}
                       </p>
 
-                      <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex flex-col gap-3">
                         <button
                           className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
                           onClick={() => {
