@@ -57,9 +57,17 @@ function CodeReview({ editorRef }) {
   }, []);
 
   const copyCode = (text) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    if (!text) {
+      console.error("No text to copy");
+      return;
+    }
+    try {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+    }
   };
 
   if (loading)

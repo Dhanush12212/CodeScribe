@@ -114,7 +114,15 @@ function CodeAssistant() {
   };
  
   const copyCode = (text) => {
-    navigator.clipboard.writeText(text);
+    if (!text) {
+      console.error("No text to copy");
+      return;
+    }
+    try {
+      navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+    }
   };
 
   return (
@@ -219,9 +227,13 @@ function CodeAssistant() {
             </div>
           ))
         ) : (
-          <p className="text-gray-500 text-center mt-5">
-            Ask something to generate or explain code...
-          </p>
+           <div className="text-center text-gray-500 mt-5 space-y-2">
+              <p>Ask something to generate or explain code...</p>
+              <p className="text-gray-400 text-sm">
+                Press: <span className="text-blue-400 font-medium">Ctrl + Shift + S</span> for AI Code Edit
+              </p>
+            </div>
+          
         )}
  
         {loading && (

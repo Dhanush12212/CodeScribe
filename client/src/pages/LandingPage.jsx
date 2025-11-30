@@ -37,6 +37,7 @@ export default function LandingPage() {
   const [explanation, setExplanation] = useState("");
 
   const handleOnClick = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/auth/isLoggedIn`, {
@@ -77,8 +78,18 @@ export default function LandingPage() {
           <a href="#tech" className="hover:text-cyan-400 transition">
             Tech Stack
           </a>
-          <button onClick={handleOnClick} className="hover:text-cyan-400">
-            Get Started
+
+          <button
+            onClick={handleOnClick}
+            disabled={loading}
+            className={`flex items-center gap-2 hover:text-cyan-400 ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            {loading && (
+              <span className="h-4 w-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></span>
+            )}
+            {loading ? "Checking..." : "Get Started"}
           </button>
         </div>
 
@@ -108,14 +119,23 @@ export default function LandingPage() {
             >
               Tech Stack
             </a>
+
             <button
               onClick={() => {
                 setMenuOpen(false);
                 handleOnClick();
               }}
-              className="px-5 py-2 bg-cyan-500 text-black font-semibold rounded-xl hover:bg-cyan-400 transition"
+              disabled={loading}
+              className={`px-5 py-2 rounded-xl font-semibold transition flex items-center gap-2 ${
+                loading
+                  ? "bg-cyan-600 opacity-50 cursor-not-allowed"
+                  : "bg-cyan-500 hover:bg-cyan-400 text-black"
+              }`}
             >
-              Get Started
+              {loading && (
+                <span className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+              )}
+              {loading ? "Checking..." : "Get Started"}
             </button>
           </div>
         )}
@@ -138,9 +158,17 @@ export default function LandingPage() {
           <div className="mt-8">
             <button
               onClick={handleOnClick}
-              className="px-6 py-3 bg-cyan-500 text-black font-semibold rounded-xl shadow-lg hover:bg-cyan-400 transition transform hover:-translate-y-1"
+              disabled={loading}
+              className={`px-6 py-3 rounded-xl font-semibold shadow-lg transition transform flex items-center gap-2 ${
+                loading
+                  ? "bg-cyan-600 opacity-50 cursor-not-allowed"
+                  : "bg-cyan-500 hover:bg-cyan-400 text-black hover:-translate-y-1"
+              }`}
             >
-              Get Started
+              {loading && (
+                <span className="h-5 w-5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+              )}
+              {loading ? "Checking..." : "Get Started"}
             </button>
           </div>
         </motion.div>

@@ -26,13 +26,18 @@ export default function initSocket(httpServer) {
       const { code, language } = rooms.get(roomId);
 
       const totalUsers = io.sockets.adapter.rooms.get(roomId)?.size || 0; 
+      console.log(`User ${socket.id} joined room: ${roomId}`);
+      console.log(`Total users in room ${roomId}:`, totalUsers);
+      console.log(`Emitting roomMembers event for room ${roomId}:`, totalUsers);
       io.to(roomId).emit("roomMembers", totalUsers);
 
       socket.emit("roomJoined", { roomId });
       socket.emit("updatedCode", { roomId, code, senderId: "server" });
       socket.emit("languageChange", { roomId, language });
  
-      const chatHistory = roomMessages.get(roomId) || []; 
+      const chatHistory = roomMessages.get(roomId) || [];
+  
+      console.log(`Sending chat history for room ${roomId}:`, chatHistory);
       socket.emit("chatHistory", chatHistory);
     });
 
@@ -68,6 +73,8 @@ export default function initSocket(httpServer) {
 
       roomMessages.get(roomId).push(message);
 
+      console.log(`Message received for room ${roomId}:`, message);
+      console.log(`Updated chat history for room ${roomId}:`, roomMessages.get(roomId));
       io.to(roomId).emit("receiveMessage", message);
     });
 
@@ -89,7 +96,9 @@ export default function initSocket(httpServer) {
           const room = io.sockets.adapter.rooms.get(roomId);
           const totalUsers = room ? room.size - 1 : 0;
 
-          io.to(roomId).emit("roomMembers", totalUsers); 
+          console.log(`User ${socket.id} leaving room: ${roomId}`);
+          console.log(`Updated total users in room ${roomId}:`, totalUsers);
+          io.to(roomId).emit("roomMembers", totalUsers);
         }
       });
     });

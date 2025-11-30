@@ -264,9 +264,17 @@ const ActionView = ({ editorRef, languageId, language }) => {
                           <button
                             className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
                             onClick={() => {
-                              navigator.clipboard.writeText(shareLink);
-                              setCopied(true);
-                              setTimeout(() => setCopied(false), 1500);
+                              if (!shareLink) {
+                                console.error("No link to copy");
+                                return;
+                              }
+                              try {
+                                navigator.clipboard.writeText(shareLink);
+                                setCopied(true);
+                                setTimeout(() => setCopied(false), 1500);
+                              } catch (err) {
+                                console.error("Failed to copy link:", err);
+                              }
                             }}
                           >
                             Copy Link

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { socket } from "../../socket/socket";
 import { Session, Local } from "../../utils/storage";
@@ -10,28 +10,13 @@ function RoomChat() {
 
   const [roomId, setRoomId] = useState("");
   const [messages, setMessages] = useState([]);
-
-  useEffect(() => {
-    const stored = Local.get("roomId"); 
-    if (stored) setRoomId(stored);
-  }, []);
-
-  useEffect(() => {
-    if (!roomId) return;
-
-    const saved = Session.get(`messages-${roomId}`); 
-
-    if (saved && saved.length > 0) {
-      setMessages(saved);
-    }
-  }, [roomId]);
-
   const [onlineCount, setOnlineCount] = useState(0);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
 
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
+  const hasJoinedRef = useRef(false);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -41,53 +26,49 @@ function RoomChat() {
   };
 
   useEffect(() => {
-    if (!roomId) return;
-    if (messages.length === 0) return;
- 
-    Session.set(`messages-${roomId}`, messages);
-  }, [messages, roomId]);
+    const storedRoom = Local.get("roomId");
+    if (storedRoom) setRoomId(storedRoom);
+  }, []);
 
   useEffect(() => {
     if (!roomId) return;
- 
-    socket.emit("joinRoom", roomId);
+    const saved = Session.get(`messages-${roomId}`);
+    if (saved && saved.length) setMessages(saved);
+  }, [roomId]);
 
-    const handleChatHistory = (history) => { 
-
-      const saved = Session.get(`messages-${roomId}`);
-
-      if (!saved || saved.length === 0) { 
-        setMessages((prev) => {
-          const uniqueMessages = history.filter(
-            (msg) => !prev.some((p) => p.timestamp === msg.timestamp && p.text === msg.text)
-          );
-          const updatedMessages = [...prev, ...uniqueMessages];
-          Session.set(`messages-${roomId}`, updatedMessages); 
-          return updatedMessages;
-        });
-      } else { 
-        setMessages(saved);
-      }
-
+  const handleChatHistory = useCallback(
+    (serverHistory) => {
+      const saved = Session.get(`messages-${roomId}`) || [];
+      const merged = [...serverHistory, ...saved];
+      setMessages(merged);
+      Session.set(`messages-${roomId}`, merged);
       scrollToBottom();
-    };
+    },
+    [roomId]
+  );
 
-    const handleReceiveMessage = (msg) => { 
-
+  const handleReceiveMessage = useCallback(
+    (msg) => {
       setMessages((prev) => {
-        if (prev.some((p) => p.timestamp === msg.timestamp && p.text === msg.text)) {
-          return prev; 
-        }
-        const updatedMessages = [...prev, msg];
-        Session.set(`messages-${roomId}`, updatedMessages);  
-        return updatedMessages;
+        const updated = [...prev, msg];
+        Session.set(`messages-${roomId}`, updated);
+        return updated;
       });
       scrollToBottom();
-    };
+    },
+    [roomId]
+  );
 
-    const handleRoomMembers = (count) => { 
-      setOnlineCount(count);
-    };
+  const handleRoomMembers = useCallback((count) => {
+    setOnlineCount(count);
+  }, []);
+
+  useEffect(() => {
+    if (!roomId) return;
+    if (hasJoinedRef.current) return;
+    hasJoinedRef.current = true;
+
+    socket.emit("joinRoom", roomId);
 
     socket.on("chatHistory", handleChatHistory);
     socket.on("receiveMessage", handleReceiveMessage);
@@ -97,14 +78,13 @@ function RoomChat() {
       socket.off("chatHistory", handleChatHistory);
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("roomMembers", handleRoomMembers);
+      hasJoinedRef.current = false;
     };
-  }, [roomId]);
+  }, [roomId, handleChatHistory, handleReceiveMessage, handleRoomMembers]);
 
   const handleSend = (e) => {
     e.preventDefault();
-    if (!input.trim()) { 
-      return;
-    } 
+    if (!input.trim()) return;
 
     setSending(true);
 
@@ -113,11 +93,12 @@ function RoomChat() {
       sender: username,
       text: input.trim(),
       timestamp: Date.now(),
-    }; 
+    };
+
     setMessages((prev) => {
-      const updatedMessages = [...prev, message];
-      Session.set(`messages-${roomId}`, updatedMessages);
-      return updatedMessages;
+      const updated = [...prev, message];
+      Session.set(`messages-${roomId}`, updated);
+      return updated;
     });
 
     socket.emit("sendMessage", message);
@@ -153,24 +134,15 @@ function RoomChat() {
     >
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{
-          backgroundColor: "#1f2937",
-          borderBottom: "1px solid #374151",
-        }}
+        style={{ backgroundColor: "#1f2937", borderBottom: "1px solid #374151" }}
       >
-        <h2 className="text-lg font-semibold text-white">💬 Room Chat</h2>
-        <p className="text-green-500 text-sm whitespace-nowrap">
-          👥Online: {onlineCount}
-        </p>
+        <h2 className="text-lg font-semibold">💬 Room Chat</h2>
+        <p className="text-green-500 text-sm">👥Online: {onlineCount}</p>
       </div>
 
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 flex flex-col space-y-4 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
-        style={{
-          scrollbarWidth: "thin",
-          scrollbarColor: "#4b5563 #1f2937",
-        }}
+        className="flex-1 overflow-y-auto p-4 flex flex-col space-y-4"
       >
         {messages.length > 0 ? (
           messages.map((msg, idx) => (
@@ -186,24 +158,19 @@ function RoomChat() {
                     ? "bg-blue-700 text-white"
                     : "bg-gray-800 text-gray-100"
                 }`}
-                style={{
-                  border:
-                    msg.sender === username
-                      ? "1px solid #3b82f6"
-                      : "1px solid #374151",
-                }}
               >
                 <div className="font-semibold text-xs opacity-80">
                   {msg.sender}
                 </div>
-                <p className="whitespace-pre-wrap leading-relaxed font-md text-lg">
+                <p className="whitespace-pre-wrap leading-relaxed text-lg">
                   {msg.text}
-                </p> 
+                </p>
                 <div className="text-[10px] text-gray-400 mt-1 text-right">
-                  {msg.timestamp
-                    ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                    : ""}
-                </div> 
+                  {new Date(msg.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
               </div>
             </div>
           ))
@@ -217,10 +184,7 @@ function RoomChat() {
       <form
         onSubmit={handleSend}
         className="p-3 flex gap-2 sticky bottom-0"
-        style={{
-          backgroundColor: "#1f2937",
-          borderTop: "1px solid #374151",
-        }}
+        style={{ backgroundColor: "#1f2937", borderTop: "1px solid #374151" }}
       >
         <textarea
           value={input}
@@ -235,17 +199,14 @@ function RoomChat() {
             minHeight: "36px",
           }}
         />
+
         <button
           type="submit"
           disabled={sending}
-          className={`text-white px-5 py-2.5 rounded-md flex items-center justify-center gap-2 shadow-md transition-all duration-200 ${
-            sending ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700"
-          }`}
-          style={{
-            backgroundColor: "#2563eb",
-          }}
+          className="text-white px-5 py-2.5 rounded-md flex items-center justify-center gap-2 shadow-md"
+          style={{ backgroundColor: "#2563eb" }}
         >
-          {sending ? <Loader2 className="animate-spin h-5 w-5" /> : <Send size={18} />}
+          {sending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
           {sending ? "Sending..." : "Send"}
         </button>
       </form>
