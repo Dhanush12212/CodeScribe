@@ -30,6 +30,9 @@
     "socket": "^0.14.57",
     "socket.io": "^4.8.1"
   },
+  "puppeteer": {
+    "default_browser": "chrome"
+  },
   "devDependencies": {
     "nodemon": "^3.1.9"
   }

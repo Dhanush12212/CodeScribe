@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { getCodeHeadline } from "../utils/gemini.utils.js";
 
-const __filename = fileURLToPath(import.meta.url); 
+const __filename = fileURLToPath(import.meta.url);
 
 const exportPDF = async (req, res) => {
   try {
@@ -63,8 +63,11 @@ const exportPDF = async (req, res) => {
     res.setHeader("Content-Disposition", 'attachment; filename="Code.pdf"');
     return res.end(pdfBuffer);
   } catch (err) {
-      console.error("PDF generation error:", err);
-      return res.status(500).json({ error: "PDF generation failed", details: err.message });
+    console.error("PDF generation error:", err);
+    return res.status(500).json({
+      error: "PDF generation failed",
+      details: err.message,
+    });
   }
 };
 
