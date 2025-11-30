@@ -142,7 +142,8 @@ const ActionView = ({ editorRef, languageId, language }) => {
             w-[100vw]
             sm:w-[70vw]
             md:w-[45vw]
-            lg:w-[30vw]
+            lg:w-[25vw] 
+            lg:right-3 lg:left-auto lg:mx-0
             rounded-xl p-5 shadow-2xl z-30
           "
           style={{
@@ -184,7 +185,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
               >
                 Share Room
               </button>
-                        
+
               {showShareRoomOptions && (
                 <div className="flex flex-col items-center gap-3 mb-4 w-full">
                   <div className="flex gap-3 w-full justify-center flex-col sm:flex-row">
@@ -251,7 +252,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
                   )}
                 </div>
               )}
-              
+
               <button
                 className={`w-[80%] sm:w-[50%] py-3 rounded-lg text-white font-semibold ${
                   isDownloading
