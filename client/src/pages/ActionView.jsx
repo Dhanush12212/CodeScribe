@@ -98,7 +98,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative">
       {isDownloading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-50 text-white rounded-lg">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
@@ -179,84 +179,81 @@ const ActionView = ({ editorRef, languageId, language }) => {
           ) : (
             <div className="flex flex-col items-center w-full">
               <button
-                className="w-full sm:w-[60%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg mb-4"
+                className="w-[80%] sm:w-[50%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg mb-4"
                 onClick={() => setShowShareRoomOptions(true)}
               >
                 Share Room
               </button>
-
+                        
               {showShareRoomOptions && (
                 <div className="flex flex-col items-center gap-3 mb-4 w-full">
                   <div className="flex gap-3 w-full justify-center flex-col sm:flex-row">
                     <button
-                      className="w-full sm:w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      className="w-[80%] sm:w-[35%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                       onClick={() => handleGenerateLink("read")}
                     >
                       Read Only
                     </button>
-
+              
                     <button
-                      className="w-full sm:w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      className="w-[80%] sm:w-[35%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                       onClick={() => handleGenerateLink("write")}
                     >
                       Read / Write
                     </button>
                   </div>
-
-                  {linkLoading ? (
-                    <div className="text-blue-400 text-sm mt-2">Generating link...</div>
-                  ) : (
-                    shareLink && (
-                      <div
-                        className="w-full p-3 bg-black/40 rounded-lg mt-2 flex flex-col items-center"
-                        style={{ border: "1px solid #4B5563" }}
-                      >
-                        <p className="text-xs text-gray-300 break-all text-center">
-                          {shareLink ? `${shareLink.slice(0, 50)}...` : ""}
-                        </p>
-
-                        <div className="flex gap-4 flex-col sm:flex-row">
-                          <button
-                            className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
-                            onClick={() => {
+              
+                  {!linkLoading && shareLink && (
+                    <div
+                      className="w-full p-3 bg-black/40 rounded-lg mt-2 flex flex-col items-center"
+                      style={{ border: "1px solid #4B5563" }}
+                    >
+                      <p className="text-xs text-gray-300 break-all text-center">
+                        {shareLink ? `${shareLink.slice(0, 50)}...` : ""}
+                      </p>
+                  
+                      <div className="flex gap-3 flex-col sm:flex-row">
+                        <button
+                          className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
+                          onClick={() => {
+                            navigator.clipboard.writeText(shareLink);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 1500);
+                          }}
+                        >
+                          Copy Link
+                        </button>
+                        
+                        <button
+                          className="mt-2 px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-black text-sm rounded-md"
+                          onClick={async () => {
+                            if (navigator.share) {
+                              await navigator.share({
+                                title: "Join my CodeScribe Room",
+                                text: "Here is your workspace link",
+                                url: shareLink,
+                              });
+                            } else {
                               navigator.clipboard.writeText(shareLink);
-                              setCopied(true);
-                              setTimeout(() => setCopied(false), 1500);
-                            }}
-                          >
-                            Copy Link
-                          </button>
-                          <button
-                            className="mt-2 px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-black text-sm rounded-md"
-                            onClick={async () => {
-                              if (navigator.share) {
-                                await navigator.share({
-                                  title: "Join my CodeScribe Room",
-                                  text: "Here is your workspace link",
-                                  url: shareLink,
-                                });
-                              } else {
-                                navigator.clipboard.writeText(shareLink);
-                              }
-                            }}
-                          >
-                            Share
-                          </button>
-                        </div>
-
-                        {copied && (
-                          <div className="mt-2 text-green-400 text-xs font-semibold">
-                            ✓ Copied!
-                          </div>
-                        )}
+                            }
+                          }}
+                        >
+                          Share
+                        </button>
                       </div>
-                    )
+                        
+                      {copied && (
+                        <div className="mt-2 text-green-400 text-xs font-semibold">
+                          ✓ Copied!
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
-
+              
               <button
-                className={`w-full sm:w-[60%] py-3 rounded-lg text-white font-semibold ${
+                className={`w-[80%] sm:w-[50%] py-3 rounded-lg text-white font-semibold ${
                   isDownloading
                     ? "bg-gray-500 cursor-wait opacity-70"
                     : "bg-green-600 hover:bg-green-500"
@@ -266,6 +263,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
               >
                 {isDownloading ? "Generating..." : "Download as PDF"}
               </button>
+
             </div>
           )}
         </div>
