@@ -60,44 +60,43 @@ function CodeEditor() {
       }
     };
 
-    handleResize();  
+    handleResize();
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
- 
   useEffect(() => {
     const t = searchParams.get("token");
-    if (!t) {  
+    if (!t) {
       navigate("/");
       return;
     }
     setToken(t);
 
     async function validate() {
-      try { 
+      try {
         const res = await axios.get(`${API_URL}/room/validateRoomAccess?token=${encodeURIComponent(t)}`, {
           withCredentials: true,
-        }); 
+        });
         setAccess(res.data.access);
-        setRoomId(res.data.roomId); 
- 
+        setRoomId(res.data.roomId);
+
         Local.set("lastToken", t);
- 
+
         if (!socket.connected) socket.connect();
-        socket.once("connect", () => { 
+        socket.once("connect", () => {
           socket.emit("createRoom", { roomId: res.data.roomId, code: "", language: "javascript" });
           socket.emit("joinRoom", res.data.roomId);
         });
-      } catch (err) { 
+      } catch (err) {
         navigate("/");
       }
     }
 
-    validate(); 
+    validate();
   }, [searchParams]);
- 
+
   useEffect(() => {
     if (!roomId) return;
 
@@ -136,7 +135,7 @@ function CodeEditor() {
       socket.off("updatedCode");
     };
   }, [roomId]);
- 
+
   const onMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -166,7 +165,7 @@ function CodeEditor() {
     },
     [roomId, access]
   );
- 
+
   const handleDebug = async () => {
     const currentCode = editorRef.current?.getValue();
     if (!currentCode?.trim()) return;
@@ -224,7 +223,7 @@ function CodeEditor() {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (themeRef.current && !themeRef.current.contains(event.target)) {
@@ -247,7 +246,7 @@ function CodeEditor() {
   }, []);
 
   return (
-    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300">
+    <div className="w-full flex flex-col custom-xl:flex-row gap-4 items-stretch transition-all duration-300 force-min-width">
       <div className="relative w-full custom-xl:w-3/4 mt-3 mb-20 h-[60vh] md:h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-50 text-white rounded-lg h-[98vh]">
@@ -257,20 +256,25 @@ function CodeEditor() {
         )}
 
         <div className="flex gap-4 mb-2 items-center p-2">
-          <LanguageSelector language={language} onSelect={(sel, id) => {
-            if (access !== "write") return;  
-            isLanguageChange.current = true;
-            setLanguage(sel);
-            setLanguageId(id);
-            const newCode = CODE_SNIPPETS[sel];
-            isRemoteUpdate.current = true;
-            editorRef.current.setValue(newCode);
-            latestCodeRef.current = newCode;
-            if (roomId) Session.set(`editor-code-${roomId}`, newCode);
-            setTimeout(() => (isRemoteUpdate.current = false), 120);
-            socket.emit("languageChange", { roomId, language: sel, senderId: senderId.current });
-            setTimeout(() => { isLanguageChange.current = false; }, 200);
-          }} />
+          <LanguageSelector
+            language={language}
+            onSelect={(sel, id) => {
+              if (access !== "write") return;
+              isLanguageChange.current = true;
+              setLanguage(sel);
+              setLanguageId(id);
+              const newCode = CODE_SNIPPETS[sel];
+              isRemoteUpdate.current = true;
+              editorRef.current.setValue(newCode);
+              latestCodeRef.current = newCode;
+              if (roomId) Session.set(`editor-code-${roomId}`, newCode);
+              setTimeout(() => (isRemoteUpdate.current = false), 120);
+              socket.emit("languageChange", { roomId, language: sel, senderId: senderId.current });
+              setTimeout(() => {
+                isLanguageChange.current = false;
+              }, 200);
+            }}
+          />
 
           <div ref={themeRef} className="relative inline-block text-left">
             <button
@@ -292,9 +296,14 @@ function CodeEditor() {
                 {THEMES.map((t) => (
                   <li
                     key={t.value}
-                    onClick={() => { setTheme(t.value); setThemeOpen(false); }}
+                    onClick={() => {
+                      setTheme(t.value);
+                      setThemeOpen(false);
+                    }}
                     className={`cursor-pointer px-2 py-2 text-sm md:text-base font-medium transition-colors ${
-                      theme === t.value ? "bg-gray-800 text-blue-400" : "text-gray-200 hover:bg-gray-800 hover:text-blue-400"
+                      theme === t.value
+                        ? "bg-gray-800 text-blue-400"
+                        : "text-gray-200 hover:bg-gray-800 hover:text-blue-400"
                     }`}
                   >
                     {t.label}
@@ -307,7 +316,9 @@ function CodeEditor() {
           <button
             onClick={handleDebug}
             disabled={isDebugging || access !== "write"}
-            className={`ml-auto text-white px-4 py-2 rounded-md transition ${isDebugging ? "bg-gray-700 cursor-not-allowed" : "bg-gray-800 hover:bg-blue-700"}`}
+            className={`ml-auto text-white px-4 py-2 rounded-md transition ${
+              isDebugging ? "bg-gray-700 cursor-not-allowed" : "bg-gray-800 hover:bg-blue-700"
+            }`}
           >
             {isDebugging ? "Debugging..." : "Debug"}
           </button>
@@ -329,7 +340,6 @@ function CodeEditor() {
           onChange={handleOnChange}
           className={access !== "write" ? "readonly" : ""}
         />
-
       </div>
 
       <div className="w-full custom-xl:w-1/2 h-[70vh] custom-xl:h-[90vh] bg-gray-900 rounded-lg">
@@ -351,25 +361,32 @@ function CodeEditor() {
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fadeIn { animation: fadeIn 0.15s ease-out; }
-      
+
         @media (min-width: 1200px) {
           .custom-xl\\:flex-row { flex-direction: row !important; }
           .custom-xl\\:w-3\\/4 { width: 75% !important; }
           .custom-xl\\:w-1\\/2 { width: 50% !important; }
           .custom-xl\\:h-\\[90vh\\] { height: 90vh !important; }
         }
-       
+
         .readonly .monaco-editor .cursor {
           display: none !important;
         }
-              
+
         .readonly .monaco-editor {
           pointer-events: none !important;
           user-select: none !important;
           cursor: not-allowed !important;
         }
-      `}</style>
 
+        /* Added FIX for screens below 350px */
+        @media (max-width: 350px) {
+          .force-min-width { 
+            min-width: 350px !important; 
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

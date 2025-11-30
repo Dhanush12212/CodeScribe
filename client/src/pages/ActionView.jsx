@@ -119,7 +119,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
   };
 
   return (
-    <div className="flex flex-col w-full mt-2 relative">
+    <div className="flex flex-col w-full mt-2 relative min-w-[350px]">
       {isDownloading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-50 text-white rounded-lg">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>

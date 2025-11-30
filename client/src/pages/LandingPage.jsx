@@ -135,7 +135,7 @@ export default function LandingPage() {
               {loading && (
                 <span className="h-4 w-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
               )}
-              {loading ? "Checking..." : "Get Started"}
+              {loading ? "Please Wait..." : "Get Started"}
             </button>
           </div>
         )}
