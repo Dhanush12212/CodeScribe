@@ -98,7 +98,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative">
       {isDownloading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 z-50 text-white rounded-lg">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
