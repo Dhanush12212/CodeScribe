@@ -2,9 +2,8 @@ import ejs from "ejs";
 import hljs from "highlight.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import fs from "fs";
 import { getCodeHeadline } from "../utils/gemini.utils.js";
-import pdf from "html-pdf-node";
+import pdf from "html-pdf";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -33,24 +32,40 @@ export const exportPDF = async (req, res) => {
       createdOn: formattedDate,
     });
 
-    const file = { content: html };
-
-    const pdfBuffer = await pdf.generatePdf(file, {
+    const options = {
       format: "A4",
-      printBackground: true,
-      margin: {
+      border: {
         top: "20mm",
+        right: "15mm",
         bottom: "20mm",
         left: "15mm",
-        right: "15mm",
       },
-    });
+      type: "pdf",
+      quality: "100",
+      renderDelay: 300
+    };
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", 'attachment; filename="Code.pdf"');
-    return res.end(pdfBuffer);
+    pdf.create(html, options).toBuffer((err, buffer) => {
+      if (err) {
+        console.error("PDF generation error:", err);
+        return res.status(500).json({
+          error: "PDF generation failed",
+          details: err.message,
+        });
+      }
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="Code.pdf"'
+      );
+      return res.end(buffer);
+    });
   } catch (err) {
     console.error("PDF generation error:", err);
-    return res.status(500).json({ error: "PDF generation failed", details: err.message });
+    return res.status(500).json({
+      error: "PDF generation failed",
+      details: err.message,
+    });
   }
 };

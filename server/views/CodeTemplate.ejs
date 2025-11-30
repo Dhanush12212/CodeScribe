@@ -3,31 +3,30 @@
 <head>
     <meta charset="UTF-8" />
 
-    <style> 
+    <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: "Fira Code", monospace;
-            padding: 15px 25px;
+            padding: 20px 30px;
             background: #fafafa;
             color: #000;
         }
- 
+
         .brand {
             position: absolute;
-            top: 10px;
-            right: 25px;
-            font-size: 16px;
+            top: 12px;
+            right: 30px;
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 20px;
             color: #444;
             font-family: Arial, Helvetica, sans-serif;
         }
- 
+
         .headline {
-            font-size: 19px;
-            margin-top: 60px;
-            margin-bottom: 20px;
+            font-size: 22px;
+            margin-top: 70px;
+            margin-bottom: 25px;
             font-weight: bold;
             color: #222;
             font-family: Arial, Helvetica, sans-serif;
@@ -36,22 +35,23 @@
         pre {
             background: #1e1e1e;
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 13.5px;
+            padding: 25px;
+            border-radius: 12px;
+            font-size: 15px;
             white-space: pre-wrap;
             word-break: break-word;
             overflow-x: hidden;
-            margin-bottom: 20px;
-        } 
-        
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
         .footer-date {
             text-align: right;
-            font-size: 13px;
-            margin-top: 10px;
+            font-size: 14px;
+            margin-top: 15px;
             color: #555;
             font-family: Arial, Helvetica, sans-serif;
-        } 
+        }
 
         .hljs-keyword { color: #c678dd; }
         .hljs-string { color: #98c379; }
@@ -64,15 +64,15 @@
 </head>
 
 <body>
- 
-    <div class="brand">CodeScribe</div> 
- 
+
+    <div class="brand">CodeScribe</div>
+
     <div class="headline">
         <%= headline %>
     </div>
- 
+
     <pre><code class="hljs"><%- highlightedCode %></code></pre>
- 
+
     <div class="footer-date">
         Created On: <%= createdOn %>
     </div>
