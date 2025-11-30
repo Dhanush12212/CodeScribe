@@ -14,39 +14,70 @@ const ActionButtons = ({ activeComponent, setActiveComponent, onShowSharePopup }
   ];
 
   return (
-    <div className="flex gap-3 w-full items-center mx-2">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
-        {buttons.map(({ label, key, color }) => (
+    <div className="w-full"> 
+      <div className="hidden sm:flex gap-3 w-full items-center mx-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+          {buttons.map(({ label, key, color }) => (
+            <button
+              key={key}
+              onClick={() => setActiveComponent(key)}
+              className={buttonBaseStyle}
+              style={{
+                backgroundColor: activeComponent === key ? color : "transparent",
+                color: activeComponent === key ? "#ffffff" : color,
+                border: `1px solid ${color}`,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={onShowSharePopup}
+          className="p-2 rounded-full hover:bg-blue-500 hover:text-white transition-all"
+          style={{
+            border: "1px solid #3b82f6",
+            color: "#60a5fa",
+          }}
+          title="Share"
+        >
+          <Share2 size={22} />
+        </button>
+      </div> 
+
+      <div className="sm:hidden flex flex-col gap-3 w-full px-3 mt-1">
+        <div className="grid grid-cols-2 gap-3">
+          {buttons.map(({ label, key, color }) => (
+            <button
+              key={key}
+              onClick={() => setActiveComponent(key)}
+              className={buttonBaseStyle}
+              style={{
+                backgroundColor: activeComponent === key ? color : "transparent",
+                color: activeComponent === key ? "#ffffff" : color,
+                border: `1px solid ${color}`,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex justify-center w-full">
           <button
-            key={key}
-            onClick={() => setActiveComponent(key)}
-            className={buttonBaseStyle}
+            onClick={onShowSharePopup}
+            className="p-3 rounded-full hover:bg-blue-500 hover:text-white transition-all"
             style={{
-              backgroundColor: activeComponent === key ? color : "transparent",
-              color: activeComponent === key ? "#ffffff" : color,
-              border: `1px solid ${color}`,   
+              border: "1px solid #3b82f6",
+              color: "#60a5fa",
             }}
+            title="Share"
           >
-            {label}
+            <Share2 size={22} />
           </button>
-        ))}
+        </div>
       </div>
- 
-      <button
-        onClick={onShowSharePopup}
-        className="
-          p-2 rounded-full 
-          hover:bg-blue-500 hover:text-white 
-          transition-all
-        "
-        style={{
-          border: "1px solid #3b82f6",   
-          color: "#60a5fa",         
-        }}
-        title="Share"
-      >
-        <Share2 size={22} />
-      </button>
     </div>
   );
 };

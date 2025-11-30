@@ -23,12 +23,10 @@ const ActionView = ({ editorRef, languageId, language }) => {
     try {
       const token = new URLSearchParams(window.location.search).get("token");
       if (!token) return null;
-
       const res = await axios.get(
         `${API_URL}/room/validateRoomAccess?token=${encodeURIComponent(token)}`,
         { withCredentials: true }
       );
-
       return res.data.roomId;
     } catch {
       return null;
@@ -116,7 +114,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
         }}
       />
 
-      <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative">
+      <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative top-2">
         <div className={activeComponent === "CodeRunner" ? "block" : "hidden"}>
           <CodeRunner editorRef={editorRef} languageId={languageId} />
         </div>
@@ -139,10 +137,10 @@ const ActionView = ({ editorRef, languageId, language }) => {
           ref={popupRef}
           className="
             absolute top-[60px] left-0 right-0 mx-auto
-            w-[100vw]
+            w-[95vw]
             sm:w-[70vw]
             md:w-[45vw]
-            lg:w-[25vw] 
+            lg:w-[25vw]
             lg:right-3 lg:left-auto lg:mx-0
             rounded-xl p-5 shadow-2xl z-30
           "
@@ -170,40 +168,37 @@ const ActionView = ({ editorRef, languageId, language }) => {
               <p><span className="text-indigo-400 font-semibold">Chat:</span> Collaborate live.</p>
               <p><span className="text-purple-400 font-semibold">Review:</span> AI suggestions.</p>
               <p><span className="text-green-400 font-semibold">PDF Export:</span> Save formatted output.</p>
-              <button
-                className="mt-4 w-full py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400"
-                onClick={() => setShowShareInfo(false)}
-              >
+              <button className="mt-4 w-full py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400">
                 Back
               </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center w-full">
+            <div className="flex flex-col items-center w-full space-y-3 sm:space-y-4">
               <button
-                className="w-[80%] sm:w-[50%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg mb-4"
+                className="w-full sm:w-[55%] py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg"
                 onClick={() => setShowShareRoomOptions(true)}
               >
                 Share Room
               </button>
 
               {showShareRoomOptions && (
-                <div className="flex flex-col items-center gap-3 mb-4 w-full">
-                  <div className="flex gap-3 w-full justify-center flex-col sm:flex-row">
+                <div className="flex flex-col items-center gap-3 w-full">
+                  <div className="flex  gap-3 w-full justify-center">
                     <button
-                      className="w-[80%] sm:w-[35%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      className="w-full sm:w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                       onClick={() => handleGenerateLink("read")}
                     >
                       Read Only
                     </button>
-              
+
                     <button
-                      className="w-[80%] sm:w-[35%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                      className="w-full sm:w-[40%] py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                       onClick={() => handleGenerateLink("write")}
                     >
                       Read / Write
                     </button>
                   </div>
-              
+
                   {!linkLoading && shareLink && (
                     <div
                       className="w-full p-3 bg-black/40 rounded-lg mt-2 flex flex-col items-center"
@@ -212,10 +207,10 @@ const ActionView = ({ editorRef, languageId, language }) => {
                       <p className="text-xs text-gray-300 break-all text-center">
                         {shareLink ? `${shareLink.slice(0, 50)}...` : ""}
                       </p>
-                  
-                      <div className="flex gap-3 flex-col sm:flex-row">
+
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <button
-                          className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-md"
                           onClick={() => {
                             navigator.clipboard.writeText(shareLink);
                             setCopied(true);
@@ -224,14 +219,14 @@ const ActionView = ({ editorRef, languageId, language }) => {
                         >
                           Copy Link
                         </button>
-                        
+
                         <button
-                          className="mt-2 px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-black text-sm rounded-md"
+                          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-black text-sm rounded-md"
                           onClick={async () => {
                             if (navigator.share) {
                               await navigator.share({
                                 title: "Join my CodeScribe Room",
-                                text: "Here is your workspace link",
+                                text: "Workspace link",
                                 url: shareLink,
                               });
                             } else {
@@ -242,7 +237,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
                           Share
                         </button>
                       </div>
-                        
+
                       {copied && (
                         <div className="mt-2 text-green-400 text-xs font-semibold">
                           ✓ Copied!
@@ -254,7 +249,7 @@ const ActionView = ({ editorRef, languageId, language }) => {
               )}
 
               <button
-                className={`w-[80%] sm:w-[50%] py-3 rounded-lg text-white font-semibold ${
+                className={`w-full sm:w-[55%] py-3 rounded-lg text-white font-semibold ${
                   isDownloading
                     ? "bg-gray-500 cursor-wait opacity-70"
                     : "bg-green-600 hover:bg-green-500"
@@ -264,7 +259,6 @@ const ActionView = ({ editorRef, languageId, language }) => {
               >
                 {isDownloading ? "Generating..." : "Download as PDF"}
               </button>
-
             </div>
           )}
         </div>
