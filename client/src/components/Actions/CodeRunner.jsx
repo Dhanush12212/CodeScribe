@@ -12,7 +12,7 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
   const [inputValue, setInputValue] = useState("");
   const [isError, setIsError] = useState(false);
   const [executionTime, setExecutionTime] = useState(null);
- 
+
   useEffect(() => {
     const saved = Session.get(STORAGE_KEY);
     if (saved) {
@@ -22,7 +22,7 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
       setInputValue(saved.inputValue || "");
     }
   }, []);
- 
+
   const saveToSession = (data) => {
     Session.set(STORAGE_KEY, {
       output: data.output,
@@ -33,23 +33,13 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
   };
 
   const pollResult = async (token) => {
-    try {
-      const res = await axios.get(
-        `${API_URL}/execute/result/${token}`,
-        { withCredentials: true }
-      );
-      const data = res.data;
-
-      if (data.status.id >= 3) {
-        return data;
-      } else {
-        await new Promise((r) => setTimeout(r, 2500));
-        return await pollResult(token);
-      }
-    } catch (err) {
-      console.error("Error polling result:", err);
-      throw err;
-    }
+    const res = await axios.get(`${API_URL}/execute/result/${token}`, {
+      withCredentials: true,
+    });
+    const data = res.data;
+    if (data.status.id >= 3) return data;
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    return await pollResult(token);
   };
 
   const runCode = async (userInput) => {
@@ -60,17 +50,11 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
     try {
       setIsLoading(true);
       setInputValue(userInput);
-
       const runResponse = await axios.post(
         `${API_URL}/execute/runCode`,
-        {
-          source_code: sourceCode,
-          language_id: languageId,
-          stdin: userInput,
-        },
+        { source_code: sourceCode, language_id: languageId, stdin: userInput },
         { withCredentials: true }
       );
-
       const token = runResponse.data.token;
       if (!token) throw new Error("Failed to get submission token");
 
@@ -93,28 +77,21 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
 
       setOutput(finalOutput);
       setIsError(isErr);
- 
       saveToSession({
         output: finalOutput,
         isError: isErr,
         inputValue: userInput,
         executionTime: result.time,
       });
-
-    } catch (error) {
-      console.error(error);
-      alert(error.message || "Unable to run code");
-
+    } catch (err) {
       setOutput([]);
       setIsError(true);
-
       saveToSession({
         output: [],
         isError: true,
         inputValue: userInput,
         executionTime: null,
       });
-
     } finally {
       setIsLoading(false);
       setShowRunPopup(false);
@@ -124,7 +101,7 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
 
   return (
     <div
-      className="rounded-md h-[91vh] p-3 flex flex-col"
+      className="rounded-md h-[91vh] p-3 flex flex-col text-xs sm:text-sm"
       style={{
         border: `1px solid ${isError ? "#ef4444" : "#333"}`,
         backgroundColor: "#0f0f0f",
@@ -134,45 +111,34 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
       }}
     >
       <div className="flex justify-end gap-3 mb-2">
-        <button
-          onClick={() => setShowRunPopup(true)}
-          className="px-4 py-3 text-sm font-medium rounded-md bg-gray-700 hover:bg-gray-600 text-white transition"
-        >
+        <button className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm rounded-md bg-gray-700 hover:bg-gray-600 text-white" onClick={() => setShowRunPopup(true)}>
           Input
         </button>
 
-        <button
-          onClick={() => runCode("")}
-          className="px-4 py-3 text-sm font-medium rounded-md bg-green-700 hover:bg-green-600 text-white transition"
-        >
+        <button className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm rounded-md bg-green-700 hover:bg-green-600 text-white" onClick={() => runCode("")}>
           Run Code
         </button>
       </div>
 
       {showRunPopup && (
-        <InputPopup
-          inputValue={inputValue}
-          setInputValue={setInputValue}
-          onSubmit={runCode}
-          onCancel={() => setShowRunPopup(false)}
-        />
+        <InputPopup inputValue={inputValue} setInputValue={setInputValue} onSubmit={runCode} onCancel={() => setShowRunPopup(false)} />
       )}
 
-      <p className="mb-3 text-xl text-gray-500 text-center font-bold">Output</p>
+      <p className="mb-3 text-base sm:text-xl text-gray-500 text-center font-bold">Output</p>
 
       {executionTime && (
-        <span className="flex justify-end text-gray-400 mb-2">
+        <span className="flex justify-end text-gray-400 mb-2 text-xs sm:text-sm">
           Execution time: {executionTime}s
         </span>
       )}
 
       {isLoading ? (
-        <p className="text-center text-gray-400">Running...</p>
+        <p className="text-center text-gray-400 text-xs sm:text-sm">Running...</p>
       ) : output ? (
-        output.map((line, i) => <p key={i}>{line}</p>)
+        output.map((line, i) => <p key={i} className="text-xs sm:text-sm">{line}</p>)
       ) : (
         <div className="flex flex-1 justify-center items-start mt-12">
-          <p className="text-center text-gray-500">
+          <p className="text-center text-gray-500 text-sm sm:text-base">
             Click <span className="text-green-400 font-semibold">'Run Code'</span> to execute and view output here.
           </p>
         </div>

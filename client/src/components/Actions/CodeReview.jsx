@@ -14,21 +14,17 @@ function CodeReview({ editorRef }) {
     try {
       setLoading(true);
       setError(null);
-
       const code = editorRef.current?.getValue();
-
       if (!code || code.trim() === "") {
         setError("Code editor is empty");
         setLoading(false);
         return;
       }
-
       const res = await axios.post(
         `${API_URL}/codeAssistant/reviewCode`,
         { code },
         { withCredentials: true }
       );
-
       setReview(res.data);
       sessionStorage.setItem("code_review", JSON.stringify(res.data));
     } catch (err) {
@@ -47,45 +43,37 @@ function CodeReview({ editorRef }) {
 
   useEffect(() => {
     const savedReview = sessionStorage.getItem("code_review");
-
     if (savedReview) {
       setReview(JSON.parse(savedReview));
       return;
     }
-
     fetchCodeReview();
   }, []);
 
   const copyCode = (text) => {
-    if (!text) {
-      console.error("No text to copy");
-      return;
-    }
+    if (!text) return;
     try {
       navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
-      console.error("Failed to copy text:", err);
-    }
+    } catch {}
   };
 
   if (loading)
     return (
-      <div className="h-[90vh] flex items-center justify-center text-white bg-[#111827]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-        <span className="ml-4 text-xl">Analyzing your code…</span>
+      <div className="h-[90vh] flex items-center justify-center text-white bg-[#111827] text-lg sm:text-xl">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
+        <span className="ml-4">Analyzing your code…</span>
       </div>
     );
 
   if (error)
     return (
       <div className="h-[90vh] flex flex-col items-center justify-center text-center space-y-4 bg-[#111827]">
-        <p className="text-red-400 text-lg">{error}</p>
-
+        <p className="text-red-400 text-base sm:text-lg">{error}</p>
         <button
           onClick={handleRefresh}
-          className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm shadow"
+          className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base"
         >
           Refresh Review
         </button>
@@ -96,7 +84,7 @@ function CodeReview({ editorRef }) {
 
   return (
     <div
-      className="h-[86vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-8 rounded-lg shadow-lg mx-auto relative"
+      className="h-[86vh] md:h-[75vh] lg:h-[90vh] overflow-y-auto p-4 sm:p-8 rounded-lg mx-auto relative"
       style={{
         backgroundColor: "#111827",
         border: "1px solid #374151",
@@ -105,51 +93,53 @@ function CodeReview({ editorRef }) {
     >
       <button
         onClick={handleRefresh}
-        className="absolute top-4 right-6 px-4 py-2 rounded-lg bg-blue-600 transition hover:bg-blue-700 text-white text-sm shadow"
+        className="absolute top-4 right-6 px-3 sm:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm"
       >
         Refresh Review
       </button>
 
-      <h1 className="text-3xl font-semibold text-white mb-8 text-center">
+      <h1 className="text-2xl sm:text-3xl font-semibold text-white mb-6 text-center">
         Code Review Summary
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <section
-          className="bg-[#1f2937] p-6 rounded-lg shadow-sm text-center"
+          className="bg-[#1f2937] p-4 sm:p-6 rounded-lg text-center"
           style={{ border: "1px solid #374151" }}
         >
-          <h2 className="text-lg font-medium text-blue-300">Time Complexity</h2>
-          <p className="mt-3 text-gray-200 text-base font-medium">
+          <h2 className="text-base sm:text-lg font-medium text-blue-300">
+            Time Complexity
+          </h2>
+          <p className="mt-3 text-gray-200 text-sm sm:text-base font-medium">
             {review.time_complexity}
           </p>
         </section>
 
         <section
-          className="bg-[#1f2937] p-6 rounded-lg shadow-sm text-center"
+          className="bg-[#1f2937] p-4 sm:p-6 rounded-lg text-center"
           style={{ border: "1px solid #374151" }}
         >
-          <h2 className="text-lg font-medium text-purple-300">
+          <h2 className="text-base sm:text-lg font-medium text-purple-300">
             Space Complexity
           </h2>
-          <p className="mt-3 text-gray-200 text-base font-medium">
+          <p className="mt-3 text-gray-200 text-sm sm:text-base font-medium">
             {review.space_complexity}
           </p>
         </section>
       </div>
 
       <section
-        className="bg-[#1f2937] p-6 rounded-lg shadow-sm mt-6"
+        className="bg-[#1f2937] p-4 sm:p-6 rounded-lg mt-6"
         style={{ border: "1px solid #374151" }}
       >
-        <h2 className="text-lg font-medium text-green-300">Optimized Code</h2>
+        <h2 className="text-base sm:text-lg font-medium text-green-300">
+          Optimized Code
+        </h2>
 
-        <pre className="mt-4 bg-black/40 p-4 rounded-lg text-green-400 text-[13px] overflow-visible whitespace-pre-wrap relative">
-
+        <pre className="mt-4 bg-black/40 p-3 sm:p-4 rounded-lg text-green-400 text-xs sm:text-[13px] whitespace-pre-wrap relative overflow-visible">
           <button
             onClick={() => copyCode(review.optimized_code)}
-            className="text-gray-400 hover:text-gray-200 transition absolute top-2 right-2"
-            title="Copy code"
+            className="text-gray-400 hover:text-gray-200 absolute top-2 right-2"
           >
             <Copy size={16} />
             {copied && (
@@ -164,12 +154,14 @@ function CodeReview({ editorRef }) {
       </section>
 
       <section
-        className="bg-[#1f2937] p-6 rounded-lg shadow-sm mt-6 mb-4"
+        className="bg-[#1f2937] p-4 sm:p-6 rounded-lg mt-6 mb-4"
         style={{ border: "1px solid #374151" }}
       >
-        <h2 className="text-lg font-medium text-pink-300">Reasoning</h2>
+        <h2 className="text-base sm:text-lg font-medium text-pink-300">
+          Reasoning
+        </h2>
 
-        <ul className="mt-4 list-disc ml-6 text-gray-300 space-y-2 text-sm">
+        <ul className="mt-4 list-disc ml-6 text-gray-300 space-y-2 text-xs sm:text-sm">
           {review.reasoning.map((point, index) => (
             <li key={index}>{point.replace("• ", "")}</li>
           ))}
@@ -177,11 +169,13 @@ function CodeReview({ editorRef }) {
       </section>
 
       <section
-        className="bg-[#1f2937] p-6 rounded-lg shadow-sm mt-6"
+        className="bg-[#1f2937] p-4 sm:p-6 rounded-lg mt-6"
         style={{ border: "1px solid #374151" }}
       >
-        <h2 className="text-lg font-medium text-yellow-300">Best Practices</h2>
-        <ul className="mt-4 list-disc ml-6 text-gray-300 space-y-2 text-sm">
+        <h2 className="text-base sm:text-lg font-medium text-yellow-300">
+          Best Practices
+        </h2>
+        <ul className="mt-4 list-disc ml-6 text-gray-300 space-y-2 text-xs sm:text-sm">
           {review.best_practices.map((bp, i) => (
             <li key={i}>{bp}</li>
           ))}

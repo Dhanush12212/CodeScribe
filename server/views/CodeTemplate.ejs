@@ -3,55 +3,64 @@
 <head>
     <meta charset="UTF-8" />
 
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
     <style> 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
         body {
             font-family: "Fira Code", monospace;
-            padding: 15px 25px;
+            padding: 25px 40px;
             background: #fafafa;
             color: #000;
+            font-size: 14px;
         }
- 
+
         .brand {
             position: absolute;
-            top: 10px;
-            right: 25px;
-            font-size: 16px;
+            top: 15px;
+            right: 40px;
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 20px;
+            font-family: Arial, Helvetica, sans-serif;
             color: #444;
-            font-family: Arial, Helvetica, sans-serif;
         }
- 
+
         .headline {
-            font-size: 19px;
-            margin-top: 60px;
-            margin-bottom: 20px;
+            font-size: 22px;
+            margin-top: 70px;
+            margin-bottom: 25px;
             font-weight: bold;
-            color: #222;
             font-family: Arial, Helvetica, sans-serif;
+            color: #222;
         }
 
         pre {
             background: #1e1e1e;
             color: white;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 13.5px;
+            padding: 22px;
+            border-radius: 14px;
+            font-size: 14px;
             white-space: pre-wrap;
             word-break: break-word;
-            overflow-x: hidden;
-            margin-bottom: 20px;
-        } 
-        
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 100%;
+        }
+
         .footer-date {
             text-align: right;
-            font-size: 13px;
-            margin-top: 10px;
-            color: #555;
+            font-size: 12px;
+            margin-top: 15px;
             font-family: Arial, Helvetica, sans-serif;
-        } 
+            color: #555;
+        }
 
         .hljs-keyword { color: #c678dd; }
         .hljs-string { color: #98c379; }
@@ -61,18 +70,19 @@
         .hljs-meta { color: #e06c75; }
         .hljs-built_in { color: #56b6c2; }
     </style>
+
 </head>
 
 <body>
- 
-    <div class="brand">CodeScribe</div> 
- 
+
+    <div class="brand">CodeScribe</div>
+
     <div class="headline">
         <%= headline %>
     </div>
- 
+
     <pre><code class="hljs"><%- highlightedCode %></code></pre>
- 
+
     <div class="footer-date">
         Created On: <%= createdOn %>
     </div>

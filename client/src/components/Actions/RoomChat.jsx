@@ -20,8 +20,7 @@ function RoomChat() {
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   };
 
@@ -59,17 +58,12 @@ function RoomChat() {
     [roomId]
   );
 
-  const handleRoomMembers = useCallback((count) => {
-    setOnlineCount(count);
-  }, []);
+  const handleRoomMembers = useCallback((count) => setOnlineCount(count), []);
 
   useEffect(() => {
-    if (!roomId) return;
-    if (hasJoinedRef.current) return;
+    if (!roomId || hasJoinedRef.current) return;
     hasJoinedRef.current = true;
-
     socket.emit("joinRoom", roomId);
-
     socket.on("chatHistory", handleChatHistory);
     socket.on("receiveMessage", handleReceiveMessage);
     socket.on("roomMembers", handleRoomMembers);
@@ -85,7 +79,6 @@ function RoomChat() {
   const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-
     setSending(true);
 
     const message = {
@@ -102,7 +95,6 @@ function RoomChat() {
     });
 
     socket.emit("sendMessage", message);
-
     setInput("");
     setTimeout(() => setSending(false), 300);
   };
@@ -131,50 +123,31 @@ function RoomChat() {
     }
   }, []);
 
-
   return (
     <div
-      className="relative h-[91vh] flex flex-col justify-between text-white rounded-lg"
-      style={{
-        backgroundColor: "#111827",
-        border: "1px solid #374151",
-        overflow: "hidden",
-      }}
+      className="relative h-[91vh] flex flex-col justify-between text-white rounded-lg text-xs sm:text-sm"
+      style={{ backgroundColor: "#111827", border: "1px solid #374151", overflow: "hidden" }}
     >
       <div
         className="flex items-center justify-between px-4 py-3"
         style={{ backgroundColor: "#1f2937", borderBottom: "1px solid #374151" }}
       >
-        <h2 className="text-lg font-semibold">💬 Room Chat</h2>
-        <p className="text-green-500 text-sm">👥Online: {onlineCount}</p>
+        <h2 className="text-base sm:text-lg font-semibold">💬 Room Chat</h2>
+        <p className="text-green-500 text-xs sm:text-sm">👥Online: {onlineCount}</p>
       </div>
 
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 flex flex-col space-y-4"
-      >
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 flex flex-col space-y-4">
         {messages.length > 0 ? (
           messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`w-full flex ${
-                msg.sender === username ? "justify-end" : "justify-start"
-              }`}
-            >
+            <div key={idx} className={`w-full flex ${msg.sender === username ? "justify-end" : "justify-start"}`}>
               <div
-                className={`rounded-2xl py-1 px-4 min-w-[150px] text-sm shadow-md transition-all duration-300 ${
-                  msg.sender === username
-                    ? "bg-blue-700 text-white"
-                    : "bg-gray-800 text-gray-100"
+                className={`rounded-2xl py-1 px-3 sm:px-4 min-w-[120px] sm:min-w-[150px] shadow-md text-xs sm:text-sm ${
+                  msg.sender === username ? "bg-blue-700 text-white" : "bg-gray-800 text-gray-100"
                 }`}
               >
-                <div className="font-semibold text-xs opacity-80">
-                  {msg.sender}
-                </div>
-                <p className="whitespace-pre-wrap leading-relaxed text-lg">
-                  {msg.text}
-                </p>
-                <div className="text-[10px] text-gray-400 mt-1 text-right">
+                <div className="font-semibold text-[10px] sm:text-xs opacity-80">{msg.sender}</div>
+                <p className="whitespace-pre-wrap leading-relaxed text-sm sm:text-lg">{msg.text}</p>
+                <div className="text-[8px] sm:text-[10px] text-gray-400 mt-1 text-right">
                   {new Date(msg.timestamp).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -184,7 +157,7 @@ function RoomChat() {
             </div>
           ))
         ) : (
-          <p className="text-gray-500 text-center mt-10 italic">
+          <p className="text-gray-500 text-center mt-10 italic text-xs sm:text-sm">
             No messages yet. Start the conversation! 💬
           </p>
         )}
@@ -200,28 +173,27 @@ function RoomChat() {
           ref={inputRef}
           onChange={(e) => {
             setInput(e.target.value);
-          
             const el = e.target;
             el.style.height = "auto";
             el.style.height = el.scrollHeight + "px";
           }}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
-          className="flex-1 outline-none text-white rounded-md px-3 py-3 resize-none overflow-hidden text-base"
+          className="flex-1 outline-none text-white rounded-md px-3 py-3 resize-none overflow-hidden text-sm sm:text-base"
           style={{
             backgroundColor: "#374151",
             border: "1px solid #4b5563",
-            minHeight: "36px", 
+            minHeight: "36px",
             maxHeight: "150px",
           }}
         />
         <button
           type="submit"
           disabled={sending}
-          className="text-white px-5 py-2.5 rounded-md flex items-center justify-center gap-2 shadow-md"
+          className="text-white px-4 sm:px-5 py-2.5 rounded-md flex items-center justify-center gap-2 text-sm sm:text-base"
           style={{ backgroundColor: "#2563eb" }}
         >
-          {sending ? <Loader2 className="animate-spin" /> : <Send size={18} />}
+          {sending ? <Loader2 className="animate-spin" /> : <Send size={16} className="sm:w-[18px] sm:h-[18px]" />}
           {sending ? "Sending..." : "Send"}
         </button>
       </form>
