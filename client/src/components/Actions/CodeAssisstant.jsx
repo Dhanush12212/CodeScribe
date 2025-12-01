@@ -22,10 +22,17 @@ function CodeAssistant() {
 
   const handleAsk = async () => {
     if (!query.trim()) return;
+
     const userMessage = { role: "user", content: query };
     setResponses((prev) => [...prev, userMessage]);
+
     setQuery("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "36px"; 
+    }
+
     setLoading(true);
+
     try {
       const res = await fetch(`${API_URL}/codeAssistant/ask`, {
         method: "POST",
@@ -33,13 +40,17 @@ function CodeAssistant() {
         credentials: "include",
         body: JSON.stringify({ prompt: query }),
       });
+
       const data = await res.json();
       const explanation = (data.explanation || "").trim();
       const code = (data.code || "").trim();
+
       setResponses((prev) => [...prev, { role: "assistant", explanation: "", code: "" }]);
+
       const words = explanation.split(" ");
       let currentText = "";
       let index = 0;
+
       const stream = setInterval(() => {
         if (index < words.length) {
           currentText += (index > 0 ? " " : "") + words[index];
@@ -69,6 +80,7 @@ function CodeAssistant() {
       setLoading(false);
     }
   };
+
 
   const handleInput = (e) => {
     setQuery(e.target.value);
