@@ -76,10 +76,7 @@ CodeScribe/
 
 ## 🛠️ How It Works
 
-### 1. Room Creation
-```
-POST /room/create
-```
+### 1. Room Creation 
 The backend generates:
 - Unique room ID
 - Encrypted access token
@@ -108,13 +105,12 @@ The editor sends prompts to Gemini for:
 - Debugging help
 
 ## 📸 Preview
-
-```
+ 
 ### LandingPage
 ![LandingPage](./client/src/assets/LandingPage.png) 
 
 ### Login Page
-![Login Page](./client/src/assets/Register.png) 
+![Login Page](./client/src/assets/RegisterPage.png) 
 
 ### Room Creation
 ![Room Creation](./client/src/assets/RoomCreation.png) 
@@ -126,8 +122,8 @@ The editor sends prompts to Gemini for:
 ![Code Assistant](./client/src/assets/CodeAssistant.png) 
 
 ### Code Review
-![Code Review](./client/src/assets/CodeReview.png) 
-```
+![Code Review](./client/src/assets/CodeReview.png)  
+
 
 ## 📦 Installation
 
