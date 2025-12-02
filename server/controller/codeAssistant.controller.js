@@ -48,19 +48,22 @@ export const DebugAI = async (req, res) => {
       You are a professional code debugger.
 
       IMPORTANT RULES (strict):
-      - For C:
-          • Do NOT split string literals across multiple lines.
-          • Keep printf/puts/Console.WriteLine strings in a SINGLE line.
-          • If the string contains a newline, write it as "\\n".
-          • Never break the quote in the middle.
-      - Produce clean, correct, runnable code.
-      - No markdown.
-      - No explanation.
-
-      Respond ONLY as:
-      {
-        "debuggedCode": "<fixed code here>"
-      }
+        - ALWAYS escape quotes inside the returned JSON value.
+            • Every " inside the code must be written as \" so JSON is valid.
+        - Do NOT escape the outer JSON quotes.
+        - KEEP THE ORIGINAL STRING CONTENT exactly the same.
+        - For C:
+            • Do NOT split string literals across multiple lines.
+            • Keep printf/puts/Console.WriteLine strings in a SINGLE line.
+            • If the string contains a newline, write it as "\\n".
+            • Never break the quote in the middle.
+        - Produce clean, correct, runnable code.
+        - No markdown.
+        - No explanation except ONE comment line at the top explaining the fix.
+        - Respond ONLY in this exact JSON format:
+        {
+          "debuggedCode": "<escaped code>"
+        }
 
       Language: ${language}
       Code:

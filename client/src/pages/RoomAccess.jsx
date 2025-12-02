@@ -18,13 +18,10 @@ function RoomAccess() {
   const [roomId, setRoomId] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-
-  const { user, setUser } = useAuth();   
-
-  const suppressAutoNavigateRef = useRef(false);
+  const { user, setUser } = useAuth();
   const hasWelcomedRef = useRef(false);
   const navigate = useNavigate();
- 
+
   useEffect(() => {
     const checkAuth = async () => {
       setIsChecking(true);
@@ -38,37 +35,49 @@ function RoomAccess() {
       }
     };
     checkAuth();
-  }, [navigate]);
- 
+  }, [navigate, setUser]);
+
   useEffect(() => {
-    if (user && !hasWelcomedRef.current) {
-      const alreadyWelcomed = Local.get("welcome-shown");
-      if (alreadyWelcomed) return;
+    if (!user?._id) return;
+  
+    const alreadyWelcomed = Session.get("welcome-shown");
+    if (alreadyWelcomed) return;
+  
+    Session.set("welcome-shown", true);
+    hasWelcomedRef.current = true;
+  
+    MySwal.fire({
+      title: (
+        <p className="text-xl font-semibold text-green-400">
+          Welcome Back!
+        </p>
+      ),
+      html: (
+        <p style={{ fontSize: "16px" }}>
+          Hello, {user.username.charAt(0).toUpperCase() + user.username.slice(1)}!
+        </p>
+      ),
+      iconHtml: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="text-green-500 mx-auto w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+        </svg>
+      ),
+      showConfirmButton: false,
+      timer: 1800,
+      width: "380px",
+      background: "#2e2e2e",
+      color: "#fff",
+    });
+  }, [user?._id]);
 
-      Local.set("welcome-shown", true);
-      hasWelcomedRef.current = true;
 
-      MySwal.fire({
-        title: <p className="text-xl font-semibold text-green-400">Welcome Back!</p>,
-        html: `<p style="font-size:16px;">Hello, ${user?.username || "User"}!</p>`,
-        iconHtml: `<svg xmlns="http://www.w3.org/2000/svg" class="text-green-500 mx-auto w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>`,
-        showConfirmButton: false,
-        timer: 1800,
-        width: "380px",
-        background: "#2e2e2e",
-        color: "#fff",
-      });
-    }
-  }, [user]);
- 
   useEffect(() => {
-    socket.on("connect", () => console.log(`Connected: ${socket.id}`));
-
+    socket.on("connect", () => {});
     return () => {
       socket.off("connect");
     };
   }, []);
- 
+
   const handleJoinRoom = async () => {
     if (!roomId.trim()) {
       MySwal.fire({
@@ -92,9 +101,9 @@ function RoomAccess() {
 
     Local.set("lastToken", token);
     navigate(`/CodeScribe?token=${encodeURIComponent(token)}`);
-  }; 
+  };
 
- const handleCreateRoom = async () => {
+  const handleCreateRoom = async () => {
     if (roomId.trim()) {
       MySwal.fire({
         iconHtml: <FiAlertTriangle size={50} className="text-yellow-500" />,
@@ -122,7 +131,7 @@ function RoomAccess() {
     }
 
     const newRoomId = Math.random().toString(36).substring(2, 8);
-  
+
     MySwal.fire({
       title: <p className="text-xl font-semibold text-blue-400">Creating Room...</p>,
       html: `
@@ -149,19 +158,15 @@ function RoomAccess() {
         `${API_URL}/room/createRoom`,
         { roomId: newRoomId },
         { withCredentials: true }
-      ); 
+      );
 
       const { token } = res.data;
       Local.set("lastToken", token);
-    
+
       Swal.close();
-
       navigate(`/CodeScribe?token=${encodeURIComponent(token)}`);
-    } catch (err) {
-      console.error("createRoom error:", err);
-
-      Swal.close();  
-
+    } catch {
+      Swal.close();
       MySwal.fire({
         iconHtml: <FiAlertTriangle size={50} className="text-red-500" />,
         title: "Create Error",
@@ -176,12 +181,40 @@ function RoomAccess() {
   const handleLogout = async () => {
     try {
       await axios.put(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+    
       Local.remove("user");
+      Local.remove("welcome-shown");
+      Session.remove("welcome-shown");
+    
       setUser(null);
+    
+      await MySwal.fire({
+        title: (
+          <p className="text-xl font-semibold text-red-400">
+            Logged Out
+          </p>
+        ),
+        html: (
+          <p style={{ fontSize: "15px" }}>
+            You have been logged out successfully.
+          </p>
+        ),
+        iconHtml: (
+          <svg xmlns="http://www.w3.org/2000/svg" className="text-red-500 mx-auto w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ),
+        showConfirmButton: false,
+        timer: 1500,
+        background: "#2e2e2e",
+        color: "#fff",
+        width: "360px",
+      });
+    
       navigate("/register");
     } catch {}
-  };
- 
+  };  
+
   if (isChecking) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#0f0a19] text-white text-xl">
@@ -192,7 +225,6 @@ function RoomAccess() {
 
   return (
     <div className="w-full h-screen relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
- 
       <div className="absolute inset-0 z-0 select-none">
         {[
           { name: "JAVA", color: "text-orange-400", top: "10%", left: "5%" },
@@ -211,9 +243,8 @@ function RoomAccess() {
           </p>
         ))}
       </div>
- 
+
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 sm:px-0">
- 
         {user && (
           <div className="absolute top-4 right-4 select-none">
             <div className="relative">
@@ -239,7 +270,7 @@ function RoomAccess() {
                     />
                     <div className="leading-tight">
                       <p className="text-md font-semibold text-blue-400">
-                        {user?.username}
+                        {user?.username?.charAt(0).toUpperCase() + user?.username?.slice(1)}
                       </p>
                     </div>
                   </div>
@@ -254,7 +285,7 @@ function RoomAccess() {
             </div>
           </div>
         )}
- 
+
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -282,7 +313,7 @@ function RoomAccess() {
               />
             </p>
           </div>
- 
+
           <div className="flex gap-6">
             <button
               className="px-8 py-4 text-lg font-semibold text-white bg-blue-700 rounded-xl hover:bg-blue-600"
@@ -297,7 +328,7 @@ function RoomAccess() {
               Join Room
             </button>
           </div>
- 
+
           <div className="flex mt-3 items-center gap-4">
             <input
               type="text"

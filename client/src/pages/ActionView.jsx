@@ -11,6 +11,7 @@ import axios from "axios";
 const ActionView = ({ editorRef, languageId, language }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
   const [showSharePopup, setShowSharePopup] = useState(false);
+  const [showRunPopup, setShowRunPopup] = useState(false);
   const [showShareRoomOptions, setShowShareRoomOptions] = useState(false);
   const [showShareInfo, setShowShareInfo] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -116,7 +117,11 @@ const ActionView = ({ editorRef, languageId, language }) => {
 
       <div className="flex-1 overflow-y-auto rounded-md bg-[#0f0f0f] p-0 sm:p-2 relative top-2">
         <div className={activeComponent === "CodeRunner" ? "block" : "hidden"}>
-          <CodeRunner editorRef={editorRef} languageId={languageId} />
+          <CodeRunner 
+            editorRef={editorRef} 
+            languageId={languageId} 
+            showRunPopup={showRunPopup}
+            setShowRunPopup={setShowRunPopup}/>
         </div>
 
         <div className={activeComponent === "Code Assisstant" ? "block" : "hidden"}>
