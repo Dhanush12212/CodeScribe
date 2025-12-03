@@ -109,7 +109,6 @@ The editor sends prompts to Gemini for:
 
 ## 📸 Preview
 
-```
 ### LandingPage
 ![LandingPage](./client/src/assets/LandingPage.png) 
 
@@ -127,7 +126,6 @@ The editor sends prompts to Gemini for:
 
 ### Code Review
 ![Code Review](./client/src/assets/CodeReview.png) 
-```
 
 ## 📦 Installation
 
