@@ -5,26 +5,84 @@ dotenv.config();
 const GEMINI_API_URL = process.env.GEMINI_API_URL;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// export const askGemini = async (prompt) => {
+//   const body = {
+//     contents: [
+//       {
+//         role: "user",
+//         parts: [{ text: prompt }],
+//       },
+//     ],
+//   };
+
+//   const response = await axios.post(
+//     `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+//     body,
+//     { headers: { "Content-Type": "application/json" } }
+//   );
+
+//   return (
+//     response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ""
+//   );
+// };
+
 export const askGemini = async (prompt) => {
-  const body = {
-    contents: [
+  try {
+    if (!GEMINI_API_URL) {
+      throw new ApiError(500, "GEMINI_API_URL is missing");
+    }
+    if (!GEMINI_API_KEY) {
+      throw new ApiError(500, "GEMINI_API_KEY is missing");
+    }
+
+    const body = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+    };
+
+    const response = await axios.post(
+      GEMINI_API_URL,       
+      body,
       {
-        role: "user",
-        parts: [{ text: prompt }],
-      },
-    ],
-  };
+        params: {
+          key: GEMINI_API_KEY, 
+        },
+        headers: {
+          "Content-Type": "application/json",
+        },
+        timeout: 30000,
+      }
+    );
 
-  const response = await axios.post(
-    `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-    body,
-    { headers: { "Content-Type": "application/json" } }
-  );
+    return (
+      response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ""
+    );
 
-  return (
-    response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ""
-  );
+  } catch (error) {
+    if (error.response?.status === 429) {
+      console.error("Gemini rate limit hit");
+
+      throw new ApiError(
+        429,
+        "AI is busy right now. Please wait a few seconds and try again."
+      );
+    }
+
+    console.error("Gemini Error:");
+    console.error("Status:", error.response?.status);
+    console.error("Data:", error.response?.data || error.message);
+
+    throw new ApiError(
+      error.response?.status || 500,
+      "Gemini request failed"
+    );
+  }
 };
+
 
 export const extractJson = (text) => {
   try {
@@ -75,3 +133,4 @@ export const getCodeHeadline = async (code, language) => {
 
   return headline.trim();
 };
+

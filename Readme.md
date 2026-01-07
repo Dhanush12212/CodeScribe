@@ -105,11 +105,7 @@ The editor sends prompts to Gemini for:
 - Debugging help
 
 ## 📸 Preview
-<<<<<<< HEAD
 
-=======
- 
->>>>>>> 38c9c383545cb2d047fe7165a776e34eba38e388
 ### LandingPage
 ![LandingPage](./client/src/assets/LandingPage.png) 
 
@@ -126,12 +122,10 @@ The editor sends prompts to Gemini for:
 ![Code Assistant](./client/src/assets/CodeAssistant.png) 
 
 ### Code Review
-<<<<<<< HEAD
 ![Code Review](./client/src/assets/CodeReview.png) 
 =======
 ![Code Review](./client/src/assets/CodeReview.png)  
 
->>>>>>> 38c9c383545cb2d047fe7165a776e34eba38e388
 
 ## 📦 Installation
 
@@ -155,7 +149,4 @@ npm install
 npm run dev
 ```
 
-## 🤝 Contributing
 
-Contributions are welcome!
-Feel free to submit issues or pull requests. 
