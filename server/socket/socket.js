@@ -63,22 +63,29 @@ export default function initSocket(httpServer) {
     });
 
     socket.on("sendMessage", ({ roomId, sender, text }) => { 
-
+      console.log(`[CHAT][RECEIVED] room=${roomId} sender=${sender} text="${text}"`);
       if (!roomId || !text) { 
         return;
       }
 
-      if (!roomMessages.has(roomId)) roomMessages.set(roomId, []);
-
+      if (!roomMessages.has(roomId)) {
+        roomMessages.set(roomId, []);
+      }
       const message = {
         sender,
         text,
         timestamp: Date.now(),
       }; 
 
+      const previousMessages = roomMessages.get(roomId);     
+      console.log(`[CHAT][HISTORY] room=${roomId} messages=`);
+      previousMessages.forEach((msg, index) => {
+        console.log(`#${index + 1} | sender=${msg.sender} | text="${msg.text}" | time=${new Date(msg.timestamp).toLocaleTimeString()}`);
+      });
+
       roomMessages.get(roomId).push(message);
-      io.to(roomId).emit("receiveMessage", message);
- 
+      socket.to(roomId).emit("receiveMessage", message);
+      console.log(`[CHAT][SENT] room=${roomId} sender=${sender}`);
     });
 
     socket.on("createRoom", ({ roomId, code, language }) => { 

@@ -30,6 +30,14 @@ const userSchema = new Schema(
       type: String,
       default: null,
     },
+    aiUsageCount: {
+      type: Number,
+      default: 0,
+    },
+    aiUsageResetDate: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );

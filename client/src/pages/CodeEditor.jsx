@@ -10,6 +10,7 @@ import { API_URL } from "../../config";
 import AIPromptModal from "../components/UI/AIPromptModel";
 import { Local, Session } from "../utils/storage";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 function CodeEditor() {
   const [searchParams] = useSearchParams();
@@ -84,11 +85,16 @@ function CodeEditor() {
 
         Local.set("lastToken", t);
 
-        if (!socket.connected) socket.connect();
-        socket.once("connect", () => {
+        if (!socket.connected) {
+          socket.connect();
+          socket.once("connect", () => {
+            socket.emit("createRoom", { roomId: res.data.roomId, code: "", language: "javascript" });
+            socket.emit("joinRoom", res.data.roomId);
+          });
+        } else {
           socket.emit("createRoom", { roomId: res.data.roomId, code: "", language: "javascript" });
           socket.emit("joinRoom", res.data.roomId);
-        });
+        }
       } catch (err) {
         navigate("/");
       }
@@ -186,6 +192,17 @@ function CodeEditor() {
         if (roomId) Session.set(`editor-code-${roomId}`, debuggedCode);
         setTimeout(() => (isRemoteUpdate.current = false), 120);
       }
+    } catch (err) {
+      if (err.response?.status === 403) {
+        Swal.fire({
+          icon: "warning",
+          title: "AI Limit Reached",
+          text: err.response.data?.error || "You have reached your monthly AI usage limit.",
+          confirmButtonColor: "#3B82F6",
+          background: "#1f2937",
+          color: "#fff",
+        });
+      }
     } finally {
       setIsDebugging(false);
       setLoading(false);
@@ -219,7 +236,17 @@ function CodeEditor() {
 
       setTimeout(() => (isRemoteUpdate.current = false), 120);
       setLoading(false);
-    } catch {
+    } catch (err) {
+      if (err.response?.status === 403) {
+        Swal.fire({
+          icon: "warning",
+          title: "AI Limit Reached",
+          text: err.response.data?.error || "You have reached your monthly AI usage limit.",
+          confirmButtonColor: "#3B82F6",
+          background: "#1f2937",
+          color: "#fff",
+        });
+      }
       setLoading(false);
     }
   };

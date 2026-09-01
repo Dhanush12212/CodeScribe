@@ -77,21 +77,21 @@ const CodeRunner = ({ editorRef, languageId, showRunPopup, setShowRunPopup }) =>
 
       setOutput(finalOutput);
       setIsError(isErr);
-      saveToSession({
-        output: finalOutput,
-        isError: isErr,
-        inputValue: userInput,
-        executionTime: result.time,
-      });
+      // saveToSession({
+      //   output: finalOutput,
+      //   isError: isErr,
+      //   inputValue: userInput,
+      //   executionTime: result.time,
+      // });
     } catch (err) {
       setOutput([]);
       setIsError(true);
-      saveToSession({
-        output: [],
-        isError: true,
-        inputValue: userInput,
-        executionTime: null,
-      });
+      // saveToSession({
+      //   output: [],
+      //   isError: true,
+      //   inputValue: userInput,
+      //   executionTime: null,
+      // });
     } finally {
       setIsLoading(false);
       setShowRunPopup(false);

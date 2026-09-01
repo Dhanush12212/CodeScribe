@@ -1,14 +1,16 @@
 import React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { API_URL } from "../../../config";
 import { Copy } from "lucide-react";
+import Swal from "sweetalert2";
 
-function CodeReview({ editorRef }) {
+function CodeReview({ editorRef, isActive }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [review, setReview] = useState(null);
   const [copied, setCopied] = useState(false);
+  const hasFetched = useRef(false);
 
   const fetchCodeReview = async () => {
     try {
@@ -28,7 +30,19 @@ function CodeReview({ editorRef }) {
       setReview(res.data);
       sessionStorage.setItem("code_review", JSON.stringify(res.data));
     } catch (err) {
-      setError("Failed to fetch code review");
+      if (err.response?.status === 403) {
+        Swal.fire({
+          icon: "warning",
+          title: "AI Limit Reached",
+          text: err.response.data?.error || "You have reached your monthly AI usage limit.",
+          confirmButtonColor: "#3B82F6",
+          background: "#1f2937",
+          color: "#fff",
+        });
+        setError("AI usage limit reached");
+      } else {
+        setError("Failed to fetch code review");
+      }
     } finally {
       setLoading(false);
     }
@@ -42,13 +56,19 @@ function CodeReview({ editorRef }) {
   };
 
   useEffect(() => {
+    if (!isActive) return;
+    
     const savedReview = sessionStorage.getItem("code_review");
     if (savedReview) {
       setReview(JSON.parse(savedReview));
       return;
     }
-    fetchCodeReview();
-  }, []);
+    
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchCodeReview();
+    }
+  }, [isActive]);
 
   const copyCode = (text) => {
     if (!text) return;

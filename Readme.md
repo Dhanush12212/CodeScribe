@@ -43,6 +43,7 @@ CodeScribe is a real-time collaborative code editor designed to enhance develope
 - Tailwind CSS
 - Framer Motion
 - Socket.IO Client
+- Monaco Editor
 
 ### Backend
 - Node.js
@@ -51,6 +52,7 @@ CodeScribe is a real-time collaborative code editor designed to enhance develope
 - Crypto (token encryption)
 - JWT
 - REST APIs
+- Google Auth
 
 ### AI Integration
 - Gemini API (Google’s AI model)
@@ -76,10 +78,7 @@ CodeScribe/
 
 ## 🛠️ How It Works
 
-### 1. Room Creation
-```
-POST /room/create
-```
+### 1. Room Creation 
 The backend generates:
 - Unique room ID
 - Encrypted access token
@@ -113,7 +112,7 @@ The editor sends prompts to Gemini for:
 ![LandingPage](./client/src/assets/LandingPage.png) 
 
 ### Login Page
-![Login Page](./client/src/assets/Register.png) 
+![Login Page](./client/src/assets/RegisterPage.png) 
 
 ### Room Creation
 ![Room Creation](./client/src/assets/RoomCreation.png) 
@@ -126,6 +125,9 @@ The editor sends prompts to Gemini for:
 
 ### Code Review
 ![Code Review](./client/src/assets/CodeReview.png) 
+=======
+![Code Review](./client/src/assets/CodeReview.png)  
+
 
 ## 📦 Installation
 
@@ -149,7 +151,4 @@ npm install
 npm run dev
 ```
 
-## 🤝 Contributing
 
-Contributions are welcome!
-Feel free to submit issues or pull requests. 

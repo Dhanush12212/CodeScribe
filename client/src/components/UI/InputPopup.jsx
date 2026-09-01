@@ -8,12 +8,18 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
     onSubmit(localInput);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
+  // const handleKeyDown = (e) => {
+  //   if (e.ctrlKey && e.key === "Enter") {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+  //     return;
+  //   }
+
+  //   if (e.key === "Enter" && !e.shiftKey) {
+  //     e.preventDefault();
+  //     handleSubmit();
+  //   }
+  // };
 
   return (
     <div className="absolute inset-0 z-20 flex justify-center items-center"> 
@@ -34,7 +40,6 @@ const InputPopup = ({ inputValue, setInputValue, onSubmit, onCancel }) => {
         <textarea
           value={localInput}
           onChange={(e) => setLocalInput(e.target.value)}
-          onKeyDown={handleKeyDown}
           className="w-full p-3 mb-4 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-1 focus:ring-green-500 resize-none h-36 placeholder-gray-400 text-base"
           placeholder="Type your input here..."
           style={{

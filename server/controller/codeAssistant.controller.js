@@ -1,14 +1,46 @@
 import ApiError from "../utils/ApiError.utils.js";
-import {
-  askGemini,
-  extractJson,
-  extractCodeBlocks,
-  cleanupDebuggedCode,
-} from "../utils/gemini.utils.js";
+import { askGemini, extractJson, extractCodeBlocks, cleanupDebuggedCode } from "../utils/gemini.utils.js";
 import { runReviewCode } from "../utils/reviewCode.utils.js";
+import { User } from "../models/user.model.js";
+
+const AI_USAGE_LIMIT = 10;
+
+/**
+ * Check if user has exceeded AI usage limit. Resets count monthly.
+ * Returns the user document if allowed, or throws a 403 error.
+ */
+const checkAndIncrementAIUsage = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(401, "User not found");
+
+  const now = new Date();
+  const resetDate = new Date(user.aiUsageResetDate);
+
+  // Reset count if a new month has started
+  if (
+    now.getMonth() !== resetDate.getMonth() ||
+    now.getFullYear() !== resetDate.getFullYear()
+  ) {
+    user.aiUsageCount = 0;
+    user.aiUsageResetDate = now;
+  }
+
+  if (user.aiUsageCount >= AI_USAGE_LIMIT) {
+    throw new ApiError(
+      403,
+      `AI usage limit reached (${AI_USAGE_LIMIT}/${AI_USAGE_LIMIT}). Your limit resets next month.`
+    );
+  }
+
+  user.aiUsageCount += 1;
+  await user.save();
+  return user;
+};
 
 export const AskAI = async (req, res) => {
   try {
+    await checkAndIncrementAIUsage(req.user.id);
+
     const { prompt } = req.body;
     if (!prompt) throw new ApiError(400, "Prompt is required");
 
@@ -19,28 +51,35 @@ export const AskAI = async (req, res) => {
         "explanation": "",
         "code": ""
       }
-
+        
       If Java: use class Main + main method.
-
+        
       Prompt:
       ${prompt}
     `;
-
     const raw = await askGemini(fullPrompt);
     const parsed = extractJson(raw);
-
     return res.json({
       explanation: parsed?.explanation ?? "",
       code:
-        parsed?.code?.replace(/\\"/g, '"').replace(/\\n/g, "\n").trim() ?? "",
+        parsed?.code
+          ?.replace(/\\"/g, '"')
+          .replace(/\\n/g, "\n")
+          .trim() ?? "",
     });
-  } catch {
-    throw new ApiError(500, "Gemini request failed.");
+
+  } catch (error) {
+    console.error("AskAI Error:", error);
+    return res.status(error.statusCode || 500).json({
+      error: error.message || "Gemini request failed",
+    });
   }
 };
 
 export const DebugAI = async (req, res) => {
   try {
+    await checkAndIncrementAIUsage(req.user.id);
+
     const { code, language } = req.body;
     if (!code) throw new ApiError(400, "Code is required");
 
@@ -48,43 +87,42 @@ export const DebugAI = async (req, res) => {
       You are a professional code debugger.
 
       IMPORTANT RULES (strict):
-        - ALWAYS escape quotes inside the returned JSON value.
-            • Every " inside the code must be written as \" so JSON is valid.
-        - Do NOT escape the outer JSON quotes.
-        - KEEP THE ORIGINAL STRING CONTENT exactly the same.
-        - For C:
-            • Do NOT split string literals across multiple lines.
-            • Keep printf/puts/Console.WriteLine strings in a SINGLE line.
-            • If the string contains a newline, write it as "\\n".
-            • Never break the quote in the middle.
-        - Produce clean, correct, runnable code.
-        - No markdown.
-        - No explanation except ONE comment line at the top explaining the fix.
-        - Respond ONLY in this exact JSON format:
-        {
-          "debuggedCode": "<escaped code>"
-        }
+      - Modify the code to fix all errors.
+      - ADD INLINE COMMENTS at the EXACT lines where fixes are made.
+      - Inline comments must start with: FIXED:
+      - Do NOT add explanations outside the code.
+      - No markdown.
+      - ALWAYS escape quotes inside JSON values.
+      - Respond ONLY in JSON:
+
+      {
+        "debuggedCode": "<escaped code with FIXED comments inline>"
+      }
 
       Language: ${language}
+
       Code:
       ${code}
     `;
 
     const raw = await askGemini(fullPrompt);
     const parsed = extractJson(raw);
-
     let debuggedCode = parsed?.debuggedCode || extractCodeBlocks(raw);
-
     debuggedCode = cleanupDebuggedCode(debuggedCode);
-
     return res.json({ debuggedCode });
-  } catch {
-    throw new ApiError(500, "Gemini debugging failed");
+  } catch (error) {
+    console.error("DebugAI Error:", error);
+    return res.status(error.statusCode || 500).json({
+      error: error.message || "Gemini debugging failed",
+    });
   }
 };
 
+
 export const AIPrompt = async (req, res) => {
   try {
+    await checkAndIncrementAIUsage(req.user.id);
+
     const { prompt, code } = req.body;
     if (!prompt) throw new ApiError(400, "Prompt is required");
 
@@ -103,13 +141,15 @@ export const AIPrompt = async (req, res) => {
     const cleaned = extractCodeBlocks(raw);
 
     return res.json({ updatedCode: cleaned });
-  } catch {
-    return res.status(500).json({ error: "Failed to update code using AI" });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ error: error.message || "Failed to update code using AI" });
   }
 };
 
 export const reviewCode = async (req, res) => {
   try {
+    await checkAndIncrementAIUsage(req.user.id);
+
     const { code } = req.body;
     if (!code) throw new ApiError(400, "Code is required");
 
@@ -117,7 +157,8 @@ export const reviewCode = async (req, res) => {
     if (!result) return res.status(500).json({ error: "Invalid JSON" });
 
     return res.json(result);
-  } catch {
-    return res.status(500).json({ error: "Code review failed" });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ error: error.message || "Code review failed" });
   }
 };
+

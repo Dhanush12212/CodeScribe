@@ -8,7 +8,7 @@ import ActionButtons from "../components/UI/ActionButtons";
 import { API_URL } from "../../config";
 import axios from "axios";
 
-const ActionView = ({ editorRef, languageId, language }) => {
+const ActionView = ({ editorRef, languageId, language, roomId, access }) => {
   const [activeComponent, setActiveComponent] = useState("CodeRunner");
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showRunPopup, setShowRunPopup] = useState(false);
@@ -129,11 +129,11 @@ const ActionView = ({ editorRef, languageId, language }) => {
         </div>
 
         <div className={activeComponent === "Room Chat" ? "block" : "hidden"}>
-          <RoomChat />
+          <RoomChat roomId={roomId} />
         </div>
 
         <div className={activeComponent === "Code Review" ? "block" : "hidden"}>
-          <CodeReview editorRef={editorRef} />
+          <CodeReview editorRef={editorRef} isActive={activeComponent === "Code Review"} />
         </div>
       </div>
 

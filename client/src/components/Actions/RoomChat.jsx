@@ -4,11 +4,10 @@ import { socket } from "../../socket/socket";
 import { Session, Local } from "../../utils/storage";
 import { useAuth } from "../Contexts/AuthContext";
 
-function RoomChat() {
+function RoomChat({ roomId }) {
   const { user } = useAuth();
   const username = user?.username || "Anonymous";
 
-  const [roomId, setRoomId] = useState("");
   const [messages, setMessages] = useState([]);
   const [onlineCount, setOnlineCount] = useState(0);
   const [input, setInput] = useState("");
@@ -24,11 +23,6 @@ function RoomChat() {
         messagesContainerRef.current.scrollHeight;
     }
   };
-
-  useEffect(() => {
-    const stored = Local.get("roomId");
-    if (stored) setRoomId(stored);
-  }, []);
 
   useEffect(() => {
     if (!roomId) return;

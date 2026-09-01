@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Loader2, Copy } from "lucide-react";
 import { API_URL } from "../../../config";
 import { Session, Local } from "../../utils/storage";
+import Swal from "sweetalert2";
 
 function CodeAssistant() {
   const [query, setQuery] = useState("");
@@ -42,6 +43,24 @@ function CodeAssistant() {
       });
 
       const data = await res.json();
+
+      if (res.status === 403) {
+        Swal.fire({
+          icon: "warning",
+          title: "AI Limit Reached",
+          text: data.error || "You have reached your monthly AI usage limit.",
+          confirmButtonColor: "#3B82F6",
+          background: "#1f2937",
+          color: "#fff",
+        });
+        setResponses((prev) => [
+          ...prev,
+          { role: "assistant", explanation: data.error || "AI usage limit reached.", code: "" },
+        ]);
+        setLoading(false);
+        return;
+      }
+
       const explanation = (data.explanation || "").trim();
       const code = (data.code || "").trim();
 

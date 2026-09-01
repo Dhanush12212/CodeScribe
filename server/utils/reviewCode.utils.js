@@ -1,6 +1,7 @@
 import { askGemini, extractJson } from "./gemini.utils.js";
 
 export const runReviewCode = async (code) => {
+  const trimmedCode = code.slice(0, 6000);
   const prompt = `
     You are an AI code assistant.
 
@@ -25,7 +26,7 @@ export const runReviewCode = async (code) => {
     - Reasoning should be bullet points (*)
 
     Code:
-    ${code}
+    ${trimmedCode}
   `;
 
   const raw = await askGemini(prompt);
